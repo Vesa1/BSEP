@@ -32,6 +32,11 @@ nav {
   background-size:contain ;
 }
 
+.footer {
+  font-family: "Lucida Console", Courier, monospace;
+  color: white;
+}
+
 .main-content{
   background: white;
   min-height: calc(100vh - 200px);
