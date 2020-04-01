@@ -19,6 +19,15 @@
   align-items: center;
 }
 
+.logo{
+  width:100px;
+  height: 100px;
+  /* background-color: transparent;
+  background-image: url('../assets/images/s.png');
+  background-repeat: no-repeat;
+  background-size:contain ; */
+}
+
 .main-content{
   background: white;
   min-height: calc(100vh - 200px);
