@@ -1,0 +1,36 @@
+form {
+    border: 3px solid #f1f1f1;
+  }
+
+  .container {
+      flex-grow: 0;
+  }
+  
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 2px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  .main-content{
+    background: rgb(182, 182, 201);
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 20%;
+    display: block;
+  }

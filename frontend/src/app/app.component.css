@@ -10,6 +10,10 @@
   height:  100%;
 }
 
+nav {
+  display: flex;
+}
+
 .navbar{
   height: 100px;
   background: rgb(93, 93, 97);
@@ -28,8 +32,15 @@
   align-items: center;
 }
 
-button{
-  background: #eee;
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 5px 5px;
+  margin: 8px 4px;
+  border: none;
+  cursor: pointer;
+  width: 20%;
+  display: block;
 }
 
 .spacer{
