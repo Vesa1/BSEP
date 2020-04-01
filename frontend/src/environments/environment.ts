@@ -4,7 +4,8 @@
 
 export const environment = {
   production: false,
-  link: "http://localhost:8090"
+  link: "http://localhost:8090",
+  userPath: "user"
 };
 
 /*

@@ -1,11 +1,13 @@
 <div class="main-content">
     <div class="container">
-    <label for="userName"><b>Username</b></label>
-    <input type="text" placeholder="Enter Username" name="userName" required>
+        <form (ngSubmit)="onSubmitLogin(formLogin)" #formLogin="ngForm" action="">
+            <label for="username"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="username" required ngModel>
 
-    <label for="psw"><b>Password</b></label>
-    <input type="password" placeholder="Enter Password" name="psw" required>
+            <label for="psw"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="password" required ngModel>
 
-    <button type="submit">Login</button>
+            <button type="submit">Login</button>
+        </form>
     </div>
 </div>

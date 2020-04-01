@@ -20,7 +20,7 @@
 }
 
 .main-content{
-  background: rgb(182, 182, 201);
+  background: white;
   min-height: calc(100vh - 200px);
   display: flex;
   flex-direction: column;
