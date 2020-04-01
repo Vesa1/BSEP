@@ -6,9 +6,12 @@
       <div class="logo">
       </div>
       <div class="spacer"></div>
-      <div class="nav-items">Items</div>
+      <nav>
+        <button routerLink = "/showAllCertificates" routerLinkActive = "active">Show all certificates</button>
+        <button routerLink = "/createNewCertificate" routerLinkActive = "active">Create certificate</button>
+        <button>Log Out</button>
+    </nav> 
     </div>
-    <app-login></app-login>
     <router-outlet></router-outlet>
 
     <div class="footer">
