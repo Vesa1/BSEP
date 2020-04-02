@@ -1,7 +1,5 @@
 import { Component, OnInit,OnDestroy } from '@angular/core';
 
-import { HttpClient } from '@angular/common/http';
-import { environment } from 'src/environments/environment';
 import { AuthService } from './services/auth.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -18,6 +16,7 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
+    this.authService.autoLogin();
     this.updateAuth = this.authService.handleAuth.subscribe(data => {
       this.isAuth = !!data;
     });

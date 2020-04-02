@@ -49,4 +49,16 @@ export class AuthService {
     this.router.navigate(['/']);
     localStorage.clear();
   }
+
+  autoLogin() {
+    const userData = JSON.parse(localStorage.getItem(environment.consts.USER));
+    if (!userData) {
+      return;
+    }
+    
+    if (userData) {
+      this.handleAuth.next(userData);
+    }
+  }
+
 }
