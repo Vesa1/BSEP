@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import {NewCertificate} from '../model/new-certificate';
+import { NewCertificate} from '../model/new-certificate';
+import { CreateNewCertificateService} from '../services/create-new-certificate.service';
 @Component({
   selector: 'app-create-new-certificate',
   templateUrl: './create-new-certificate.component.html',
@@ -9,7 +10,8 @@ export class CreateNewCertificateComponent implements OnInit {
 
   newCertificate : NewCertificate;
   private selfSigned;
-  constructor() { }
+
+  constructor(private createNewCertificateService: CreateNewCertificateService) { }
 
   ngOnInit() {
   }
@@ -17,5 +19,6 @@ export class CreateNewCertificateComponent implements OnInit {
   onSumbitCreateNew(newCertificateForm) {
     this.newCertificate = newCertificateForm.value;
     console.log(this.newCertificate);
+    this.createNewCertificateService.createNewCertificate(this.newCertificate);
   }
 }

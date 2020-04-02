@@ -2,10 +2,6 @@
     <div class="container">
         <form #newCertificateForm = "ngForm" (ngSubmit) = "onSumbitCreateNew(newCertificateForm)">
 
-        certificate
-        {{newCertificateForm.value | json}}
-        Certificate
-        {{newCertificate | json}}
             <div class = "form-group">
                 <label for="commonName"><b>Common name</b></label>
                 <input type="text" required ngModel class = "form-control" placeholder="Enter common name" name="commonName">

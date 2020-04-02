@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { IssuerListService} from '../services/issuer-list.service';
 
 @Component({
   selector: 'app-issuer-list',
@@ -7,9 +8,10 @@ import { Component, OnInit } from '@angular/core';
 })
 export class IssuerListComponent implements OnInit {
 
-  constructor() { }
+  constructor(private issuerListService: IssuerListService) { }
 
   ngOnInit() {
+    this.issuerListService.issuerList();
   }
 
 }
