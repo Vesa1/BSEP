@@ -1,23 +1,36 @@
 <div class="main-content">
     <div class="container">
-    <label for="commonName"><b>Common name</b></label>
-    <input type="text" placeholder="Enter common name" name="commonName" required>
+        <form #newCertificateForm = "ngForm" (ngSubmit) = "onSumbitCreateNew(newCertificateForm)">
 
-    <label for="country"><b>Country</b></label>
-    <input type="text" placeholder="Enter country" name="country" required>
-    
-    <label for="surname"><b>Surname</b></label>
-    <input type="text" placeholder="Enter surname" name="surname" required>
+        certificate
+        {{newCertificateForm.value | json}}
+        Certificate
+        {{newCertificate | json}}
+            <div class = "form-group">
+                <label for="commonName"><b>Common name</b></label>
+                <input type="text" required ngModel class = "form-control" placeholder="Enter common name" name="commonName">
+            </div>      
+            <label for="country"><b>Country</b></label>
+            <input type="text" ngModel class = "form-control" placeholder="Enter country" name="country" required>
 
-    <label for="givenName"><b>Given name</b></label>
-    <input type="text" placeholder="Enter givenname" name="givenName" required>
-    
-    <label for="organization"><b>Organization</b></label>
-    <input type="text" placeholder="Enter organization" name="organization" required>
+            <label for="surname"><b>Surname</b></label>
+            <input type="text" ngModel placeholder="Enter surname" name="surname" required>
 
-    <label for="organizationalUnit"><b>Organizational unit</b></label>
-    <input type="text" placeholder="Enter organizational unit" name="organizationalUnit" required>
+            <label for="givenName"><b>Given name</b></label>
+            <input type="text" ngModel placeholder="Enter givenname" name="givenName" required>
+            
+            <label for="organization"><b>Organization</b></label>
+            <input type="text" ngModel placeholder="Enter organization" name="organization" required>
 
-    <button type="submit">Login</button>
+            <label for="organizationalUnit"><b>Organizational unit</b></label>
+            <input type="text" ngModel placeholder="Enter organizational unit" name="organizationalUnit" required>
+
+            <div class = "form-group">
+                <input type = "checkbox" ngModel name="self-signed" [(ngModel)] = "selfSigned">  
+                <label for = "self-signed">Self-signed?</label><br>
+            </div>
+            <app-issuer-list *ngIf = "!selfSigned"></app-issuer-list>
+            <button type="submit">Create new certificate</button>
+        </form>
     </div>
 </div>
