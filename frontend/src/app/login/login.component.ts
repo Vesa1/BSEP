@@ -10,10 +10,12 @@ import { LoginData } from '../model/login-data.model';
 })
 export class LoginComponent implements OnInit {
   submitedData: LoginData;
+ 
 
   constructor(private authService: AuthService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+  }
 
   onSubmitLogin(loginForm: NgForm) {
     this.submitedData = loginForm.value;

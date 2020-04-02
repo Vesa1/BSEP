@@ -7,9 +7,9 @@
       </div>
       <div class="spacer"></div>
       <nav>
-        <button routerLink = "/showAllCertificates" routerLinkActive = "active">Show all certificates</button>
-        <button routerLink = "/createNewCertificate" routerLinkActive = "active">Create certificate</button>
-        <button>Log Out</button>
+        <button *ngIf="isAuth" routerLink = "/showAllCertificates" routerLinkActive = "active">Show all certificates</button>
+        <button *ngIf="isAuth" routerLink = "/createNewCertificate" routerLinkActive = "active">Create certificate</button>
+        <button *ngIf="isAuth" (click)="logOut()">Log Out</button>
     </nav> 
     </div>
     <router-outlet></router-outlet>
