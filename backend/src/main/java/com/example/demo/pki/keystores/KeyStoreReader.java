@@ -19,6 +19,25 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
 import com.example.demo.data.IssuerData;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+
+
+
 public class KeyStoreReader {
 	//KeyStore je Java klasa za citanje specijalizovanih datoteka koje se koriste za cuvanje kljuceva
 	//Tri tipa entiteta koji se obicno nalaze u ovakvim datotekama su:
@@ -29,7 +48,7 @@ public class KeyStoreReader {
 	
 	public KeyStoreReader() {
 		try {
-			keyStore = KeyStore.getInstance("pcks12");
+			keyStore = KeyStore.getInstance("PKCS12");
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
 		}
@@ -78,19 +97,18 @@ public class KeyStoreReader {
     public Certificate readCertificate(String keyStoreFile, String keyStorePass, String alias) {
 		try {
 			//kreiramo instancu KeyStore
-			KeyStore ks = KeyStore.getInstance("JKS");
+			KeyStore ks = KeyStore.getInstance("PKCS12");
 			//ucitavamo podatke
 			BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
 			ks.load(in, keyStorePass.toCharArray());
 			
 			if(ks.isKeyEntry(alias)) {
 				Certificate cert = ks.getCertificate(alias);
-				System.out.println("PROCITAN SERTIFIKAT JE"+ ((X509Certificate)cert).toString());
 				return cert;
 			}
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
-		} catch (FileNotFoundException e) {
+		}  catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -108,7 +126,7 @@ public class KeyStoreReader {
 	public PrivateKey readPrivateKey(String keyStoreFile, String keyStorePass, String alias, String pass) {
 		try {
 			//kreiramo instancu KeyStore
-			KeyStore ks = KeyStore.getInstance("JKS");
+			KeyStore ks = KeyStore.getInstance("PKCS12");
 			//ucitavamo podatke
 			BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
 			ks.load(in, keyStorePass.toCharArray());
@@ -118,6 +136,8 @@ public class KeyStoreReader {
 				return pk;
 			}
 		} catch (KeyStoreException e) {
+			e.printStackTrace();
+		}  catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();

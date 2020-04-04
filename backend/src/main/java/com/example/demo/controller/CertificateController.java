@@ -1,13 +1,22 @@
 package com.example.demo.controller;
 
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,23 +46,8 @@ import com.example.demo.pki.keystores.KeyStoreWriter;
 @RestController
 @RequestMapping(value = "/certificate")
 public class CertificateController {
-	
-//	private KeyStoreWriter keyStoreWriter ;
-//	private KeyStoreReader keyStoreReader ;
 
-	
 	private KeyPair keyPairIssuer;
-	
-	@PostConstruct
-	public void init(){
-//		
-//		keyStoreWriter = new KeyStoreWriter();
-//		String globalPass = "certificatePass1";
-//		keyStoreWriter.loadKeyStore("globalKeyStore.p12", globalPass.toCharArray());
-//		keyStoreWriter.saveKeyStore("globalKeyStore.p12", globalPass.toCharArray());
-//		keyPairIssuer = generateKeyPair();
-	}
-	
 	
 	@RequestMapping(
 			value = "/createNewCertificate",
@@ -61,13 +55,14 @@ public class CertificateController {
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE
 			)
-	public ResponseEntity createNewCertificate(@RequestBody NewCertificateDTO newCertificateDTO) {
+	public ResponseEntity createNewCertificate(@RequestBody NewCertificateDTO newCertificateDTO) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
 		System.out.println("---------------------------------");
 		System.out.println("[CertificateController] -> createNewCertificate method");
 		System.out.println("Post data: ");
 		System.out.println(newCertificateDTO.toString());
 		
 		testItCreateAndWrite();
+//		testItReadFromKeyStore();
 		System.out.println("---------------------------------");
 		return new ResponseEntity(HttpStatus.OK);
 	}
@@ -79,35 +74,33 @@ public class CertificateController {
 	public ResponseEntity issuerList() {
 		System.out.println("Issuer List");
 		
-		
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
-	//testing
-	
-	private void testItCreateAndWrite() {
+	private void testItCreateAndWrite() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+		KeyStore ks = KeyStore.getInstance("PKCS12");
 		
-		KeyStoreWriter keyStoreWriter = new KeyStoreWriter();
-		String globalPass = "certificatePass1";
-		keyStoreWriter.loadKeyStore("globalKeyStore.jks", globalPass.toCharArray());
-		keyStoreWriter.saveKeyStore("globalKeyStore.jks", globalPass.toCharArray());
-		keyPairIssuer = generateKeyPair();
+		ks.load( null, null );
+
 		SubjectData subjectData = generateSubjectData();
-		
 		KeyPair keyPairIssuer = generateKeyPair();
 		IssuerData issuerData = generateIssuerData(keyPairIssuer.getPrivate());
-	
+		
 		CertificateGenerator cg = new CertificateGenerator();
 		X509Certificate cert = cg.generateCertificate(subjectData, issuerData);
-		
-		String certificatePass = "certificatePass";
-		keyStoreWriter.write(certificatePass, subjectData.getPrivateKey(), certificatePass.toCharArray(), cert);
+		System.out.println(cert.toString());
+
+		try {
+			ks.setKeyEntry("keyAlias", subjectData.getPublicKey(), "keyAlias".toCharArray(), new Certificate[] {cert});
+			ks.store( new FileOutputStream( "radiiiplsaaa.p12" ), "keyAlias".toCharArray() );
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void testItReadFromKeyStore() {
 		KeyStoreReader keyStoreReader = new KeyStoreReader();
-		String globalPass = "certificatePass1";
-		keyStoreReader.readCertificate("globalKeyStore.jks", globalPass, "certificatePass");
+		keyStoreReader.readCertificate("radiiiplsaaa.p12", "keyAlias",  "keyAlias");
 	}
 	
 	private IssuerData generateIssuerData(PrivateKey issuerKey) {
@@ -156,7 +149,7 @@ public class CertificateController {
 		    // - podatke o vlasniku
 		    // - serijski broj sertifikata
 		    // - od kada do kada vazi sertifikat
-		    return new SubjectData(keyPairSubject.getPublic(), builder.build(), sn, startDate, endDate);
+		    return new SubjectData(keyPairSubject.getPublic(), keyPairSubject.getPrivate(), builder.build(), sn, startDate, endDate);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
