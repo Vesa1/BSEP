@@ -22,7 +22,7 @@ public class KeyStoreWriter {
 	
 	public KeyStoreWriter() {
 		try {
-			keyStore = KeyStore.getInstance("JKS", "SUN");
+			keyStore = KeyStore.getInstance("PKCS12", "SUN");
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
 		} catch (NoSuchProviderException e) {

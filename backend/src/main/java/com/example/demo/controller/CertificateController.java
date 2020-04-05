@@ -61,66 +61,33 @@ public class CertificateController {
 		System.out.println("Post data: ");
 		System.out.println(newCertificateDTO.toString());
 		
-		testItCreateAndWrite();
-//		testItReadFromKeyStore();
+		KeyStore ks = KeyStore.getInstance("PKCS12");
+		ks.load(null, null);
+		
+		KeyPair keyPairIssuer = generateKeyPair();
+		SubjectData subjectData = generateSubjectData();
+		IssuerData issuerData = generateIssuerData(keyPairIssuer.getPrivate());
+		
+		CertificateGenerator cg = new CertificateGenerator();
+		Certificate cert = cg.generateCertificate(subjectData, issuerData);
+		System.out.println(cert.toString());
+		
+		try {
+			ks.setKeyEntry("alijas", issuerData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert});
+			ks.store(new FileOutputStream("globalKeyStore.p12"), "sifra".toCharArray());
+		} catch(Exception e) {
+			
+		}
+		
+		KeyStoreReader ksr = new KeyStoreReader();
+		Certificate c = ksr.readCertificate("globalKeyStore.p12", "sifra", "alijas");
+		
+		System.out.println(c.toString());
+		
 		System.out.println("---------------------------------");
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
-	@RequestMapping(
-			value = "/issuerList",
-			method = RequestMethod.GET,
-			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity issuerList() {
-		System.out.println("Issuer List");
-		
-		return new ResponseEntity(HttpStatus.OK);
-	}
-	
-	private void testItCreateAndWrite() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-		KeyStore ks = KeyStore.getInstance("PKCS12");
-		
-		ks.load( null, null );
-
-		SubjectData subjectData = generateSubjectData();
-		KeyPair keyPairIssuer = generateKeyPair();
-		IssuerData issuerData = generateIssuerData(keyPairIssuer.getPrivate());
-		
-		CertificateGenerator cg = new CertificateGenerator();
-		X509Certificate cert = cg.generateCertificate(subjectData, issuerData);
-		System.out.println(cert.toString());
-
-		try {
-			ks.setKeyEntry("keyAlias", subjectData.getPublicKey(), "keyAlias".toCharArray(), new Certificate[] {cert});
-			ks.store( new FileOutputStream( "radiiiplsaaa.p12" ), "keyAlias".toCharArray() );
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void testItReadFromKeyStore() {
-		KeyStoreReader keyStoreReader = new KeyStoreReader();
-		keyStoreReader.readCertificate("radiiiplsaaa.p12", "keyAlias",  "keyAlias");
-	}
-	
-	private IssuerData generateIssuerData(PrivateKey issuerKey) {
-		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
-	    builder.addRDN(BCStyle.CN, "Nikola Luburic");
-	    builder.addRDN(BCStyle.SURNAME, "Luburic");
-	    builder.addRDN(BCStyle.GIVENNAME, "Nikola");
-	    builder.addRDN(BCStyle.O, "UNS-FTN");
-	    builder.addRDN(BCStyle.OU, "Katedra za informatiku");
-	    builder.addRDN(BCStyle.C, "RS");
-	    builder.addRDN(BCStyle.E, "nikola.luburic@uns.ac.rs");
-	    //UID (USER ID) je ID korisnika
-	    builder.addRDN(BCStyle.UID, "654321");
-
-		//Kreiraju se podaci za issuer-a, sto u ovom slucaju ukljucuje:
-	    // - privatni kljuc koji ce se koristiti da potpise sertifikat koji se izdaje
-	    // - podatke o vlasniku sertifikata koji izdaje nov sertifikat
-		return new IssuerData(issuerKey, builder.build());
-	}
-
 	private SubjectData generateSubjectData() {
 		try {
 			KeyPair keyPairSubject = generateKeyPair();
@@ -149,12 +116,71 @@ public class CertificateController {
 		    // - podatke o vlasniku
 		    // - serijski broj sertifikata
 		    // - od kada do kada vazi sertifikat
-		    return new SubjectData(keyPairSubject.getPublic(), keyPairSubject.getPrivate(), builder.build(), sn, startDate, endDate);
+		    return new SubjectData(keyPairSubject.getPublic(), builder.build(), sn, startDate, endDate);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
+	
+	private void testItCreateAndWrite() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+		KeyStore ks = KeyStore.getInstance("PKCS12");
+		
+		ks.load( null, null );
+
+		SubjectData subjectData = generateSubjectData();
+		KeyPair keyPairIssuer = generateKeyPair();
+		IssuerData issuerData = generateIssuerData(keyPairIssuer.getPrivate());
+		
+		CertificateGenerator cg = new CertificateGenerator();
+		X509Certificate cert = cg.generateCertificate(subjectData, issuerData);
+		System.out.println(cert.toString());
+
+		try {
+			ks.setKeyEntry("keyAlias", subjectData.getPublicKey(), "keyAlias".toCharArray(), new Certificate[] {cert});
+			ks.store( new FileOutputStream( "radiiiplsaaa.p12" ), "keyAlias".toCharArray() );
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@RequestMapping(
+			value = "/issuerList",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity issuerList() {
+		System.out.println("Issuer List");
+		
+		return new ResponseEntity(HttpStatus.OK);
+	}
+	
+
+	
+	private void testItReadFromKeyStore() {
+		KeyStoreReader keyStoreReader = new KeyStoreReader();
+		keyStoreReader.readCertificate("radiiiplsaaa.p12", "keyAlias",  "keyAlias");
+	}
+	
+	private IssuerData generateIssuerData(PrivateKey issuerKey) {
+		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
+	    builder.addRDN(BCStyle.CN, "Nikola Luburic");
+	    builder.addRDN(BCStyle.SURNAME, "Luburic");
+	    builder.addRDN(BCStyle.GIVENNAME, "Nikola");
+	    builder.addRDN(BCStyle.O, "UNS-FTN");
+	    builder.addRDN(BCStyle.OU, "Katedra za informatiku");
+	    builder.addRDN(BCStyle.C, "RS");
+	    builder.addRDN(BCStyle.E, "nikola.luburic@uns.ac.rs");
+	    //UID (USER ID) je ID korisnika
+	    builder.addRDN(BCStyle.UID, "654321");
+
+		//Kreiraju se podaci za issuer-a, sto u ovom slucaju ukljucuje:
+	    // - privatni kljuc koji ce se koristiti da potpise sertifikat koji se izdaje
+	    // - podatke o vlasniku sertifikata koji izdaje nov sertifikat
+		return new IssuerData(issuerKey, builder.build());
+	}
+
+	
 
 	private KeyPair generateKeyPair() {
         try {
