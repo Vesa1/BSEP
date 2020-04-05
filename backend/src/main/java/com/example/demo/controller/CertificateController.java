@@ -20,12 +20,14 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.annotation.PostConstruct;
 
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.crypto.paddings.ISO7816d4Padding;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,42 +58,62 @@ public class CertificateController {
 			produces = MediaType.APPLICATION_JSON_VALUE
 			)
 	public ResponseEntity createNewCertificate(@RequestBody NewCertificateDTO newCertificateDTO) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-		System.out.println("---------------------------------");
+		System.out.println("--------------------------------------------------");
 		System.out.println("[CertificateController] -> createNewCertificate method");
+		System.out.println("--------------------------------------------------");
 		System.out.println("Post data: ");
 		System.out.println(newCertificateDTO.toString());
 		
 		KeyStore ks = KeyStore.getInstance("PKCS12");
 		ks.load(null, null);
 		
-		KeyPair keyPairIssuer = generateKeyPair();
-		SubjectData subjectData = generateSubjectData();
-		IssuerData issuerData = generateIssuerData(keyPairIssuer.getPrivate());
+		Calendar calendar = Calendar.getInstance();
 		
-		CertificateGenerator cg = new CertificateGenerator();
-		Certificate cert = cg.generateCertificate(subjectData, issuerData);
-		System.out.println(cert.toString());
+		SubjectData subjectData = generateSubjectData(newCertificateDTO);
+		subjectData.setStartDate(new Date());
+		System.out.println("\n---Subject data---");
+		System.out.println(subjectData.toString());
 		
-		try {
-			ks.setKeyEntry("alijas", issuerData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert});
-			ks.store(new FileOutputStream("globalKeyStore.p12"), "sifra".toCharArray());
-		} catch(Exception e) {
+		IssuerData issuerData;
+		
+		if(!newCertificateDTO.isSelfSigned()) {
+			calendar.add(Calendar.YEAR, 10);
+			subjectData.setEndDate(calendar.getTime());
+			issuerData = generateIssuerData(subjectData.getPrivateKey(), newCertificateDTO);
+			System.out.println("\n---Issuer Data---");
+			System.out.println(issuerData.toString());
 			
+			CertificateGenerator cg = new CertificateGenerator();
+			Certificate cert = cg.generateCertificate(subjectData, issuerData);
+			System.out.println("\n---Certificate---");
+			System.out.println(cert.toString());
+			
+			try {
+				ks.setKeyEntry("alijas", subjectData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert}); //potpisujemo sertifikat privatnim kljucem subject-a
+				ks.store(new FileOutputStream("globalKeyStore.p12"), "sifra".toCharArray());
+			} catch(Exception e) {
+				
+			}
 		}
 		
 		KeyStoreReader ksr = new KeyStoreReader();
 		Certificate c = ksr.readCertificate("globalKeyStore.p12", "sifra", "alijas");
 		
-		System.out.println(c.toString());
+		//System.out.println(c.toString());
 		
 		System.out.println("---------------------------------");
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
-	private SubjectData generateSubjectData() {
+	public Date todaysDate() {
+		Date startDate = new Date();
+		System.out.println("Danasnji datum: " + startDate);
+		return startDate;
+	}
+	
+	private SubjectData generateSubjectData(NewCertificateDTO newCertificateDTO) {
 		try {
 			KeyPair keyPairSubject = generateKeyPair();
-			
 			//Datumi od kad do kad vazi sertifikat
 			SimpleDateFormat iso8601Formater = new SimpleDateFormat("yyyy-MM-dd");
 			Date startDate = iso8601Formater.parse("2017-12-31");
@@ -101,13 +123,13 @@ public class CertificateController {
 			String sn="1";
 			//klasa X500NameBuilder pravi X500Name objekat koji predstavlja podatke o vlasniku
 			X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
-		    builder.addRDN(BCStyle.CN, "Goran Sladic");
-		    builder.addRDN(BCStyle.SURNAME, "Sladic");
-		    builder.addRDN(BCStyle.GIVENNAME, "Goran");
-		    builder.addRDN(BCStyle.O, "UNS-FTN");
-		    builder.addRDN(BCStyle.OU, "Katedra za informatiku");
-		    builder.addRDN(BCStyle.C, "RS");
-		    builder.addRDN(BCStyle.E, "sladicg@uns.ac.rs");
+		    builder.addRDN(BCStyle.CN, newCertificateDTO.getCommonName());
+		    builder.addRDN(BCStyle.SURNAME, newCertificateDTO.getSurname());
+		    builder.addRDN(BCStyle.GIVENNAME, newCertificateDTO.getGivenName());
+		    builder.addRDN(BCStyle.O, newCertificateDTO.getOrganization());
+		    builder.addRDN(BCStyle.OU, newCertificateDTO.getOrganizationalUnit());
+		    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
+		    builder.addRDN(BCStyle.E, "");
 		    //UID (USER ID) je ID korisnika
 		    builder.addRDN(BCStyle.UID, "123456");
 		    
@@ -116,7 +138,9 @@ public class CertificateController {
 		    // - podatke o vlasniku
 		    // - serijski broj sertifikata
 		    // - od kada do kada vazi sertifikat
-		    return new SubjectData(keyPairSubject.getPublic(), builder.build(), sn, startDate, endDate);
+		    SubjectData ret = new SubjectData(keyPairSubject.getPublic(), builder.build(), sn, startDate, endDate);
+		    ret.setPrivateKey(keyPairSubject.getPrivate());
+		    return ret;
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -133,15 +157,15 @@ public class CertificateController {
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
-	private IssuerData generateIssuerData(PrivateKey issuerKey) {
+	private IssuerData generateIssuerData(PrivateKey issuerKey, NewCertificateDTO newCertificateDTO) {
 		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
-	    builder.addRDN(BCStyle.CN, "Nikola Luburic");
-	    builder.addRDN(BCStyle.SURNAME, "Luburic");
-	    builder.addRDN(BCStyle.GIVENNAME, "Nikola");
-	    builder.addRDN(BCStyle.O, "UNS-FTN");
-	    builder.addRDN(BCStyle.OU, "Katedra za informatiku");
-	    builder.addRDN(BCStyle.C, "RS");
-	    builder.addRDN(BCStyle.E, "nikola.luburic@uns.ac.rs");
+	    builder.addRDN(BCStyle.CN, newCertificateDTO.getCommonName());
+	    builder.addRDN(BCStyle.SURNAME, newCertificateDTO.getSurname());
+	    builder.addRDN(BCStyle.GIVENNAME, newCertificateDTO.getGivenName());
+	    builder.addRDN(BCStyle.O, newCertificateDTO.getOrganization());
+	    builder.addRDN(BCStyle.OU, newCertificateDTO.getOrganizationalUnit());
+	    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
+	    builder.addRDN(BCStyle.E, "");
 	    //UID (USER ID) je ID korisnika
 	    builder.addRDN(BCStyle.UID, "654321");
 
