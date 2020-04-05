@@ -30,6 +30,7 @@ import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.crypto.paddings.ISO7816d4Padding;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,11 +43,13 @@ import com.example.demo.data.IssuerData;
 import com.example.demo.data.SubjectData;
 import com.example.demo.dto.CertificateDTO;
 import com.example.demo.dto.SplitDataDTO;
+import com.example.demo.enums.CertificateType;
 import com.example.demo.dto.LoginDataDTO;
 import com.example.demo.dto.NewCertificateDTO;
 import com.example.demo.pki.keystores.CertificateGenerator;
 import com.example.demo.pki.keystores.KeyStoreReader;
 import com.example.demo.pki.keystores.KeyStoreWriter;
+import com.example.demo.service.CertificateService;
 
 
 @RestController
@@ -55,6 +58,9 @@ public class CertificateController {
 
 	private KeyPair keyPairIssuer;
 	private KeyStoreReader keyStoreReader;
+	
+	@Autowired
+	private CertificateService certificateService;
 	
 	@RequestMapping(
 			value = "/createNewCertificate",
@@ -72,19 +78,20 @@ public class CertificateController {
 		KeyStore ks = KeyStore.getInstance("PKCS12");
 		ks.load(null, null);
 		
-		Calendar calendar = Calendar.getInstance();
-		
-		SubjectData subjectData = generateSubjectData(newCertificateDTO);
-		subjectData.setStartDate(new Date());
-		System.out.println("\n---Subject data---");
-		System.out.println(subjectData.toString());
-		
-		IssuerData issuerData;
 		
 		if(!newCertificateDTO.isSelfSigned()) {
+			Long serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
+			SubjectData subjectData = generateSubjectData(newCertificateDTO, serialId.toString()); //Kreiramo subject
+			
+			Calendar calendar = Calendar.getInstance();
+			subjectData.setStartDate(new Date()); //pocetak vazenja sertifikata
 			calendar.add(Calendar.YEAR, 10);
-			subjectData.setEndDate(calendar.getTime());
-			issuerData = generateIssuerData(subjectData.getPrivateKey(), newCertificateDTO);
+			subjectData.setEndDate(calendar.getTime()); // kraj vazenja sertifikata
+			
+			System.out.println("\n---Subject data---");
+			System.out.println(subjectData.toString());
+			
+			IssuerData issuerData = generateIssuerData(serialId.toString(), subjectData.getPrivateKey(), newCertificateDTO);
 			System.out.println("\n---Issuer Data---");
 			System.out.println(issuerData.toString());
 			
@@ -94,7 +101,7 @@ public class CertificateController {
 			System.out.println(cert.toString());
 			
 			try {
-				ks.setKeyEntry("alijas", subjectData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert}); //potpisujemo sertifikat privatnim kljucem subject-a
+				ks.setKeyEntry("alijas"+subjectData.getSerialNumber(), subjectData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert}); //potpisujemo sertifikat privatnim kljucem subject-a
 				ks.store(new FileOutputStream("globalKeyStore.p12"), "sifra".toCharArray());
 			} catch(Exception e) {
 				
@@ -102,30 +109,23 @@ public class CertificateController {
 		}
 		
 		KeyStoreReader ksr = new KeyStoreReader();
-		Certificate c = ksr.readCertificate("globalKeyStore.p12", "sifra", "alijas");
+		Certificate c = ksr.readCertificate("globalKeyStore.p12", "sifra", "alijas8");
 		
-		//System.out.println(c.toString());
+		System.out.println("Riduje");
+		System.out.println(c.toString());
 		
 		System.out.println("---------------------------------");
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
-	public Date todaysDate() {
-		Date startDate = new Date();
-		System.out.println("Danasnji datum: " + startDate);
-		return startDate;
-	}
 	
-	private SubjectData generateSubjectData(NewCertificateDTO newCertificateDTO) {
+	
+	private SubjectData generateSubjectData(NewCertificateDTO newCertificateDTO, String serialId) {
 		try {
 			KeyPair keyPairSubject = generateKeyPair();
-			//Datumi od kad do kad vazi sertifikat
-			SimpleDateFormat iso8601Formater = new SimpleDateFormat("yyyy-MM-dd");
-			Date startDate = iso8601Formater.parse("2017-12-31");
-			Date endDate = iso8601Formater.parse("2022-12-31");
-			
+
 			//Serijski broj sertifikata
-			String sn="2222";
+			String sn= serialId;
 			//klasa X500NameBuilder pravi X500Name objekat koji predstavlja podatke o vlasniku
 			X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
 		    builder.addRDN(BCStyle.CN, newCertificateDTO.getCommonName());
@@ -136,17 +136,17 @@ public class CertificateController {
 		    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
 		    builder.addRDN(BCStyle.E, "");
 		    //UID (USER ID) je ID korisnika
-		    builder.addRDN(BCStyle.UID, "1111111");
+		    builder.addRDN(BCStyle.UID, serialId);
 		    
 		    //Kreiraju se podaci za sertifikat, sto ukljucuje:
 		    // - javni kljuc koji se vezuje za sertifikat
 		    // - podatke o vlasniku
 		    // - serijski broj sertifikata
 		    // - od kada do kada vazi sertifikat
-		    SubjectData ret = new SubjectData(keyPairSubject.getPublic(), builder.build(), sn, startDate, endDate);
+		    SubjectData ret = new SubjectData(keyPairSubject.getPublic(), builder.build(), sn);
 		    ret.setPrivateKey(keyPairSubject.getPrivate());
 		    return ret;
-		} catch (ParseException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -195,7 +195,7 @@ public class CertificateController {
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
-	private IssuerData generateIssuerData(PrivateKey issuerKey, NewCertificateDTO newCertificateDTO) {
+	private IssuerData generateIssuerData(String serialId, PrivateKey issuerKey, NewCertificateDTO newCertificateDTO) {
 		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
 	    builder.addRDN(BCStyle.CN, newCertificateDTO.getCommonName());
 	    builder.addRDN(BCStyle.SURNAME, newCertificateDTO.getSurname());
@@ -205,7 +205,7 @@ public class CertificateController {
 	    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
 	    builder.addRDN(BCStyle.E, "");
 	    //UID (USER ID) je ID korisnika
-	    builder.addRDN(BCStyle.UID, "651");
+	    builder.addRDN(BCStyle.UID, serialId);
 
 		//Kreiraju se podaci za issuer-a, sto u ovom slucaju ukljucuje:
 	    // - privatni kljuc koji ce se koristiti da potpise sertifikat koji se izdaje

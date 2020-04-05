@@ -7,5 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.demo.model.*;
 
 public interface CertificateRepository extends JpaRepository<Certificate, Long>{
-	List<Certificate> findAll();
+	public List<Certificate> findAll();
+	@SuppressWarnings("unchecked")
+	public Certificate save(Certificate c);
 }

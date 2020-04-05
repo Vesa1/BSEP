@@ -23,6 +23,19 @@ public class Certificate implements Serializable {
 		
 	}
 	
+	public Certificate(CertificateType type) {
+		certificateType = type;
+		revoked = false;
+	}
+	
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
 	public CertificateType getCertificateType() {
 		return certificateType;
 	}
