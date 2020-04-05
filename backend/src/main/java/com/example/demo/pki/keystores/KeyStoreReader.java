@@ -1,5 +1,6 @@
 package com.example.demo.pki.keystores;
 
+import java.awt.List;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,6 +14,8 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Enumeration;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -106,6 +109,44 @@ public class KeyStoreReader {
 				Certificate cert = ks.getCertificate(alias);
 				return cert;
 			}
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+		}  catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} catch (CertificateException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+    
+    /**
+	 * Izlistava sve sertifikate iz KS fajla
+	 */
+    public ArrayList<X509Certificate> getAllCertifiaces(String keyStoreFile, String keyStorePass) {
+    	ArrayList<X509Certificate> certificates = new ArrayList();
+    	try {
+			//kreiramo instancu KeyStore
+			KeyStore ks = KeyStore.getInstance("PKCS12");
+			//ucitavamo podatke
+			BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
+			ks.load(in, keyStorePass.toCharArray());
+			
+			Enumeration<String> aliases = ks.aliases();
+			
+			while(aliases.hasMoreElements()) {
+				String aliasName = aliases.nextElement();
+				if(ks.isKeyEntry(aliasName)) {
+					X509Certificate cert = (X509Certificate)ks.getCertificate(aliasName);
+					
+					certificates.add(cert);
+				}
+			}
+
+			return certificates;
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
 		}  catch (FileNotFoundException e) {

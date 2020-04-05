@@ -20,6 +20,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import javax.annotation.PostConstruct;
@@ -37,6 +38,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.data.IssuerData;
 import com.example.demo.data.SubjectData;
+import com.example.demo.dto.CertificateDTO;
+import com.example.demo.dto.SplitDataDTO;
+import com.example.demo.dto.LoginDataDTO;
 import com.example.demo.dto.NewCertificateDTO;
 import com.example.demo.pki.keystores.CertificateGenerator;
 import com.example.demo.pki.keystores.KeyStoreReader;
@@ -48,6 +52,7 @@ import com.example.demo.pki.keystores.KeyStoreWriter;
 public class CertificateController {
 
 	private KeyPair keyPairIssuer;
+	private KeyStoreReader keyStoreReader;
 	
 	@RequestMapping(
 			value = "/createNewCertificate",
@@ -72,19 +77,6 @@ public class CertificateController {
 		Certificate cert = cg.generateCertificate(subjectData, issuerData);
 		System.out.println(cert.toString());
 		
-		try {
-			ks.setKeyEntry("alijas", issuerData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert});
-			ks.store(new FileOutputStream("globalKeyStore.p12"), "sifra".toCharArray());
-		} catch(Exception e) {
-			
-		}
-		
-		KeyStoreReader ksr = new KeyStoreReader();
-		Certificate c = ksr.readCertificate("globalKeyStore.p12", "sifra", "alijas");
-		
-		System.out.println(c.toString());
-		
-		System.out.println("---------------------------------");
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
@@ -98,7 +90,7 @@ public class CertificateController {
 			Date endDate = iso8601Formater.parse("2022-12-31");
 			
 			//Serijski broj sertifikata
-			String sn="1";
+			String sn="2222";
 			//klasa X500NameBuilder pravi X500Name objekat koji predstavlja podatke o vlasniku
 			X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
 		    builder.addRDN(BCStyle.CN, "Goran Sladic");
@@ -109,7 +101,7 @@ public class CertificateController {
 		    builder.addRDN(BCStyle.C, "RS");
 		    builder.addRDN(BCStyle.E, "sladicg@uns.ac.rs");
 		    //UID (USER ID) je ID korisnika
-		    builder.addRDN(BCStyle.UID, "123456");
+		    builder.addRDN(BCStyle.UID, "1111111");
 		    
 		    //Kreiraju se podaci za sertifikat, sto ukljucuje:
 		    // - javni kljuc koji se vezuje za sertifikat
@@ -121,6 +113,39 @@ public class CertificateController {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	@RequestMapping(
+			value = "/getAll",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity getAllCertificates() {
+		KeyStoreReader ksr = new KeyStoreReader();
+		ArrayList<CertificateDTO> certs = new ArrayList<>();
+		
+		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces("majaKeyStore.p12", "sifra");
+		
+		for (X509Certificate certificate : certificates) {
+			SplitDataDTO subjectData = mapDataFromCertificate(certificates.get(0).getSubjectDN().getName());
+			SplitDataDTO issuerData = mapDataFromCertificate(certificates.get(0).getIssuerDN().getName());
+			
+			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
+			certs.add(cert);
+		}
+		return new ResponseEntity(certs, HttpStatus.OK);
+	}
+	
+	public SplitDataDTO mapDataFromCertificate(String data) {
+
+		String[] fields = (data.trim()).split(",");
+		String[] args = new String[10];
+		for(int i = 0; i < fields.length; i++){
+			String[] splitEachField = fields[i].split("=");
+			args[i] = splitEachField[1];
+		}
+	    
+		SplitDataDTO retData = new SplitDataDTO(args[0], args[1], args[2], args[3], args[4], args[5],args[6], args[7]);
+		return retData;
 	}
 	
 	@RequestMapping(
@@ -143,7 +168,7 @@ public class CertificateController {
 	    builder.addRDN(BCStyle.C, "RS");
 	    builder.addRDN(BCStyle.E, "nikola.luburic@uns.ac.rs");
 	    //UID (USER ID) je ID korisnika
-	    builder.addRDN(BCStyle.UID, "654321");
+	    builder.addRDN(BCStyle.UID, "651");
 
 		//Kreiraju se podaci za issuer-a, sto u ovom slucaju ukljucuje:
 	    // - privatni kljuc koji ce se koristiti da potpise sertifikat koji se izdaje
