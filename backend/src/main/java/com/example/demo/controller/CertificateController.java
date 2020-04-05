@@ -123,28 +123,6 @@ public class CertificateController {
 		return null;
 	}
 	
-	private void testItCreateAndWrite() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-		KeyStore ks = KeyStore.getInstance("PKCS12");
-		
-		ks.load( null, null );
-
-		SubjectData subjectData = generateSubjectData();
-		KeyPair keyPairIssuer = generateKeyPair();
-		IssuerData issuerData = generateIssuerData(keyPairIssuer.getPrivate());
-		
-		CertificateGenerator cg = new CertificateGenerator();
-		X509Certificate cert = cg.generateCertificate(subjectData, issuerData);
-		System.out.println(cert.toString());
-
-		try {
-			ks.setKeyEntry("keyAlias", subjectData.getPublicKey(), "keyAlias".toCharArray(), new Certificate[] {cert});
-			ks.store( new FileOutputStream( "radiiiplsaaa.p12" ), "keyAlias".toCharArray() );
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	
 	@RequestMapping(
 			value = "/issuerList",
 			method = RequestMethod.GET,
@@ -153,13 +131,6 @@ public class CertificateController {
 		System.out.println("Issuer List");
 		
 		return new ResponseEntity(HttpStatus.OK);
-	}
-	
-
-	
-	private void testItReadFromKeyStore() {
-		KeyStoreReader keyStoreReader = new KeyStoreReader();
-		keyStoreReader.readCertificate("radiiiplsaaa.p12", "keyAlias",  "keyAlias");
 	}
 	
 	private IssuerData generateIssuerData(PrivateKey issuerKey) {
