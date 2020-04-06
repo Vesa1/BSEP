@@ -1,0 +1,78 @@
+.container{
+  /* height: 100%; */
+  
+  min-height: calc(100vh - 220px);
+  box-sizing: border-box;
+  padding: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.content{
+  /* box-sizing: border-box; */
+  width: 80%;
+  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  /* border: 1px solid orange; */
+  box-shadow: 4px 17px 17px 3px #b4b4b4;
+}
+
+
+.title{
+  margin-top: 10px ;
+  width: 70%;
+  display: flex;
+  border: 1px solid red;
+  justify-content: center;
+  align-items: center;
+}
+
+.spacer{
+  flex:1
+}
+
+.certificate{
+  width:150px;
+  height: 100px;
+  background-color: transparent;
+  background-image: url('../../assets/images/ssl.png');
+  background-repeat: no-repeat;
+  background-size:contain ;
+}
+.title h1{
+  width: 70%;
+  border: 1px solid green;
+}
+
+.issuedBy,.issuedTo, .validFrom, .extension{
+  border: 1px solid blue;
+  width: 50%;
+  display: flex;
+  /* justify-content: space-around; */
+  align-items: center;
+}
+
+ .details{
+  display: flex;
+  flex-direction: column;
+  border: 1px solid black;
+  width: 50%;
+  align-items: center;
+ }
+
+ .extension{
+   margin-top: 10px;
+  border: 1px solid blue;
+  width: 100%;
+  display: flex;
+  /* justify-content: space-around; */
+  align-items: center;
+ }
+
+ label{
+   flex-basis: 40%;
+ }
