@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IssuerListService} from '../services/issuer-list.service';
+import { CertificateService } from '../services/certificate.service';
 
 @Component({
   selector: 'app-issuer-list',
@@ -8,10 +8,10 @@ import { IssuerListService} from '../services/issuer-list.service';
 })
 export class IssuerListComponent implements OnInit {
 
-  constructor(private issuerListService: IssuerListService) { }
+  constructor(private certificateService: CertificateService) { }
 
   ngOnInit() {
-    this.issuerListService.issuerList();
+    this.certificateService.issuerList();
   }
 
 }

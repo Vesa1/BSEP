@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NewCertificate } from '../model/new-certificate';
-import { CreateNewCertificateService } from '../services/create-new-certificate.service';
 import { NgForm } from '@angular/forms';
+import { CertificateService } from '../services/certificate.service';
 @Component({
   selector: 'app-create-new-certificate',
   templateUrl: './create-new-certificate.component.html',
@@ -13,7 +13,7 @@ export class CreateNewCertificateComponent implements OnInit {
   private selfSigned;
 
   constructor(
-    private createNewCertificateService: CreateNewCertificateService
+    private certificateService: CertificateService
   ) {}
 
   ngOnInit() {}
@@ -22,7 +22,7 @@ export class CreateNewCertificateComponent implements OnInit {
     this.isClicked = true;
     if (newCertificateForm.form.valid) {
       this.newCertificate = newCertificateForm.value;
-      this.createNewCertificateService.createNewCertificate(
+      this.certificateService.createNewCertificate(
         this.newCertificate
       );
     }

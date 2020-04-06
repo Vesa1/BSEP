@@ -55,10 +55,9 @@ export class AuthService {
     if (!userData) {
       return;
     }
-    
+
     if (userData) {
       this.handleAuth.next(userData);
     }
   }
-
 }

@@ -29,16 +29,16 @@ export class ShowAllCertificatesComponent implements OnInit {
   dataSource: MatTableDataSource<Certificate>;
   certificates: Certificate[];
 
-
   constructor(private certificateService: CertificateService) {}
 
   ngOnInit() {
-    this.certificateService.getAllCertificates()
-    .subscribe(
-      resp => {
-        this.certificates = resp;
-        this.dataSource = new MatTableDataSource(this.certificates);
-      }
-    );
+    this.certificateService.getAllCertificates().subscribe(resp => {
+      this.certificates = resp;
+      this.dataSource = new MatTableDataSource(this.certificates);
+    });
+  }
+
+  certificateDetails(serialNumber: number) {
+    console.log('Details', serialNumber);
   }
 }

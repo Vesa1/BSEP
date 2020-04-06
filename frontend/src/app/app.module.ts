@@ -9,13 +9,15 @@ import { IssuerListComponent } from './issuer-list/issuer-list.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HomeComponent } from './home/home.component';
 import { MatTableModule } from "@angular/material/table";
+import { CertificateDetailsComponent } from './certificate-details/certificate-details.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     routingComponents,
     IssuerListComponent,
-    HomeComponent
+    HomeComponent,
+    CertificateDetailsComponent
   ],
   imports: [BrowserModule, AppRoutingModule, FormsModule, HttpClientModule, BrowserAnimationsModule, MatTableModule],
   providers: [],
