@@ -76,13 +76,13 @@ public class CertificateController {
 		System.out.println("Post data: ");
 		System.out.println(newCertificateDTO.toString());
 		
-		KeyStore ks = KeyStore.getInstance("PKCS12");
-		ks.load(null, null);
+		KeyStoreWriter ks = new KeyStoreWriter();
+		ks.loadKeyStore("globalKeyStore.p12", "sifra".toCharArray());;
 		
 		
+		Long serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
+		SubjectData subjectData = generateSubjectData(newCertificateDTO, serialId.toString()); //Kreiramo subject
 		if(!newCertificateDTO.isSelfSigned()) {
-			Long serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
-			SubjectData subjectData = generateSubjectData(newCertificateDTO, serialId.toString()); //Kreiramo subject
 			
 			Calendar calendar = Calendar.getInstance();
 			subjectData.setStartDate(new Date()); //pocetak vazenja sertifikata
@@ -102,20 +102,13 @@ public class CertificateController {
 			System.out.println(cert.toString());
 			
 			try {
-				ks.setKeyEntry("alijas"+subjectData.getSerialNumber(), subjectData.getPrivateKey(), "sifra".toCharArray(), new Certificate[] {cert}); //potpisujemo sertifikat privatnim kljucem subject-a
-				ks.store(new FileOutputStream("globalKeyStore.p12"), "sifra".toCharArray());
+				ks.write("alijas"+subjectData.getSerialNumber(), subjectData.getPrivateKey(), "sifra".toCharArray(), cert); //potpisujemo sertifikat privatnim kljucem subject-a
+				ks.saveKeyStore("globalKeyStore.p12", "sifra".toCharArray());
 			} catch(Exception e) {
 				
 			}
 		}
-		
-		KeyStoreReader ksr = new KeyStoreReader();
-		Certificate c = ksr.readCertificate("globalKeyStore.p12", "sifra", "alijas");
-		
-		System.out.println("Riduje");
-		System.out.println(c.toString());
-		
-		System.out.println("---------------------------------");
+
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
@@ -133,9 +126,9 @@ public class CertificateController {
 		    builder.addRDN(BCStyle.SURNAME, newCertificateDTO.getSurname());
 		    builder.addRDN(BCStyle.GIVENNAME, newCertificateDTO.getGivenName());
 		    builder.addRDN(BCStyle.O, newCertificateDTO.getOrganization());
-		    builder.addRDN(BCStyle.OU, newCertificateDTO.getOrganizationalUnit());
+		    builder.addRDN(BCStyle.OU,newCertificateDTO.getOrganizationalUnit());
 		    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
-		    builder.addRDN(BCStyle.E, "");
+		    builder.addRDN(BCStyle.E, "default@gmail.com");
 		    //UID (USER ID) je ID korisnika
 		    builder.addRDN(BCStyle.UID, serialId);
 		    
@@ -161,11 +154,11 @@ public class CertificateController {
 		KeyStoreReader ksr = new KeyStoreReader();
 		ArrayList<CertificateDTO> certs = new ArrayList<>();
 		
-		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces("majaKeyStore.p12", "sifra");
+		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces("globalKeyStore.p12", "sifra");
 		
 		for (X509Certificate certificate : certificates) {
-			SplitDataDTO subjectData = mapDataFromCertificate(certificates.get(0).getSubjectDN().getName());
-			SplitDataDTO issuerData = mapDataFromCertificate(certificates.get(0).getIssuerDN().getName());
+			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
+			SplitDataDTO issuerData = mapDataFromCertificate(certificate.getIssuerDN().getName());
 			
 			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
 			certs.add(cert);
@@ -174,7 +167,7 @@ public class CertificateController {
 	}
 	
 	public SplitDataDTO mapDataFromCertificate(String data) {
-
+		
 		String[] fields = (data.trim()).split(",");
 		String[] args = new String[10];
 		for(int i = 0; i < fields.length; i++){
@@ -204,7 +197,7 @@ public class CertificateController {
 	    builder.addRDN(BCStyle.O, newCertificateDTO.getOrganization());
 	    builder.addRDN(BCStyle.OU, newCertificateDTO.getOrganizationalUnit());
 	    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
-	    builder.addRDN(BCStyle.E, "");
+	    builder.addRDN(BCStyle.E, "default@gmail.com");
 	    //UID (USER ID) je ID korisnika
 	    builder.addRDN(BCStyle.UID, serialId);
 

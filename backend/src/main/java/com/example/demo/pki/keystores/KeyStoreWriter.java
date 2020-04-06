@@ -1,5 +1,7 @@
 package com.example.demo.pki.keystores;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -22,22 +24,36 @@ public class KeyStoreWriter {
 	
 	public KeyStoreWriter() {
 		try {
-			keyStore = KeyStore.getInstance("PKCS12", "SUN");
+			keyStore = KeyStore.getInstance("PKCS12");
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			e.printStackTrace();
-		}
+		} 
 	}
 	
+//	public void loadKeyStore(String fileName, char[] password) {
+//		try {
+//			if(fileName != null) {
+//				keyStore.load(new FileInputStream(fileName), password);
+//			} else {
+//				//Ako je cilj kreirati novi KeyStore poziva se i dalje load, pri cemu je prvi parametar null
+//				keyStore.load(null, password);
+//			}
+//		} catch (NoSuchAlgorithmException e) {
+//			e.printStackTrace();
+//		} catch (CertificateException e) {
+//			e.printStackTrace();
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//	}
 	public void loadKeyStore(String fileName, char[] password) {
 		try {
-			if(fileName != null) {
-				keyStore.load(new FileInputStream(fileName), password);
-			} else {
-				//Ako je cilj kreirati novi KeyStore poziva se i dalje load, pri cemu je prvi parametar null
-				keyStore.load(null, password);
-			}
+			
+			BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
+			keyStore.load(in, password);
+			
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		} catch (CertificateException e) {
@@ -46,9 +62,8 @@ public class KeyStoreWriter {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} 
 	}
-	
 	public void saveKeyStore(String fileName, char[] password) {
 		try {
 			keyStore.store(new FileOutputStream(fileName), password);
