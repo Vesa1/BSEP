@@ -162,6 +162,7 @@ public class CertificateController {
 			
 			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
 			certs.add(cert);
+
 		}
 		return new ResponseEntity(certs, HttpStatus.OK);
 	}
@@ -184,11 +185,35 @@ public class CertificateController {
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity issuerList() {
-		System.out.println("Issuer List");
+		System.out.println("\n---Getting issuer list---");
 		
-		return new ResponseEntity(HttpStatus.OK);
+		KeyStoreReader ksr = new KeyStoreReader(); 
+		ArrayList<CertificateDTO> certs = new ArrayList<>();
+		
+		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces("globalKeyStore.p12", "sifra"); //citanje svih sertifikata 
+		
+		for (X509Certificate certificate : certificates) {
+			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
+			SplitDataDTO issuerData = mapDataFromCertificate(certificate.getIssuerDN().getName());
+			
+			System.out.println("Issuer id: " + certificate.getNotAfter());
+			if(!(certificateService.isRevokedAndEndEntity(certificate.getSerialNumber())) && certificate.getNotAfter().after(new Date())) {
+				if(chainCertificates(certificate)) {
+					CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
+			
+					certs.add(cert);
+					System.out.println(cert);
+				}
+			}
+		}
+		return new ResponseEntity(certs, HttpStatus.OK);
+		
 	}
 	
+	public boolean chainCertificates(X509Certificate c) {
+		return true;
+	}
+	 
 	private IssuerData generateIssuerData(String serialId, PrivateKey issuerKey, NewCertificateDTO newCertificateDTO) {
 		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
 	    builder.addRDN(BCStyle.CN, newCertificateDTO.getCommonName());

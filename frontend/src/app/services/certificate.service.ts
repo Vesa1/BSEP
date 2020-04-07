@@ -35,7 +35,6 @@ export class CertificateService {
   }
 
   issuerList() {
-    this.http.get(environment.link + '/certificate/issuerList').subscribe();
-    console.log('Issuer List');
+    return this.http.get<any>(environment.link + '/certificate/issuerList');
   }
 }

@@ -1,6 +1,6 @@
 <label for="issuer"><b>Issuer</b></label>
-<select name="issuer">
-    <option value=""></option>
-    <option value="Volvo">Volvo</option>
-    <option value = "Renault">Renault</option>
+<select (change)="onSelect($event.target.value)" name="issuer">
+    <option *ngFor = "let cert of certificates">
+        {{cert.serialNumber}}
+    </option>
 </select>

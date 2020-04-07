@@ -7,6 +7,7 @@ export class NewCertificate {
         public organization: string,
         public organizationalUnit: string,
         public selfSigned: boolean,
-        public issuer: string
+        public issuer: string,
+        public serialNumber: string
     ) {}
 }

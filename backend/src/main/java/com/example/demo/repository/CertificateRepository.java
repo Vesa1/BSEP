@@ -10,4 +10,5 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long>{
 	public List<Certificate> findAll();
 	@SuppressWarnings("unchecked")
 	public Certificate save(Certificate c);
+	public Certificate getById(Long id);
 }

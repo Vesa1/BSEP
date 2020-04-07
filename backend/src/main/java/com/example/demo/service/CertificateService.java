@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import java.math.BigInteger;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,5 +25,12 @@ public class CertificateService {
 		}
 	}
 	
-	
+	public boolean isRevokedAndEndEntity(BigInteger bi) {
+		Long id = bi.longValue();
+		Certificate cert = certficateRepository.getById(id);
+		if(cert.isRevoked() || cert.getCertificateType().equals(CertificateType.endEntity)) {
+			return true;
+		}
+		return false;
+	}
 }

@@ -25,7 +25,7 @@
                 <input type = "checkbox" ngModel name="self-signed" [(ngModel)] = "selfSigned">  
                 <label for = "self-signed">Self-signed?</label><br>
             </div>
-            <app-issuer-list *ngIf = "!selfSigned"></app-issuer-list>
+            <app-issuer-list *ngIf = "!selfSigned" (select)="onChange($event)"></app-issuer-list>
             <span *ngIf="!newCertificateForm.form.valid && isClicked" style="color:red">Sva polja su obavezna.</span>
             <button type="submit">Create new certificate</button>
 
