@@ -38,7 +38,15 @@ export class ShowAllCertificatesComponent implements OnInit {
     });
   }
 
-  certificateDetails(serialNumber: number) {
-    console.log('Details', serialNumber);
+  checkValidity(serialNumber: number) {
+    this.certificateService
+      .checkValidity(serialNumber)
+      .subscribe(resp => console.log('SUCCESS'));
+  }
+
+  getCertificateChain(serialNumber: number) {
+    this.certificateService
+      .getCertificateChain(serialNumber)
+      .subscribe(resp => console.log('SUCCESS'));
   }
 }

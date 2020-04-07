@@ -1,5 +1,5 @@
 <div class="container">
-  <div class="content">
+  <div *ngIf="certificate" class="content">
     <div class="title">
       <div class="certificate"></div>
       <div class="spacer"></div>
@@ -7,44 +7,44 @@
     </div>
     <div class="issuedTo">
       <label>Issued to:</label>
-      <p class="description">*.facebook</p>
+      <p class="description">{{certificate.issuedBy}}</p>
     </div>
     <div class="issuedBy">
       <label>Issued by:</label>
-      <p class="description">DigiCert SHA2 High Assurance Server CA</p>
+      <p class="description">{{certificate.issuedTo}}</p>
     </div>
     <div class="validFrom">
         <label>Valid from:</label>
-        <p class="description">01-Mar-20 to 30-May-20</p>
+        <p class="description">{{certificate.validFrom}}</p>
      
     </div>
 
     <div class="details">
       <div class="extension">
         <label>Version:</label>
-        <p class="description">V3</p>
+        <p class="description">V{{certificate.version}}</p>
       </div>
       <div class="extension">
         <label>Serial Number:</label>
-        <p class="description">3243153613613</p>
+        <p class="description">{{certificate.serialNumber}}</p>
       </div>
       <div class="extension">
         <label>Signature Algorithm:</label>
-        <p class="description">SHA256RSA</p>
+        <p class="description">{{certificate.signatureAlgorithm}}</p>
       </div>
       <div class="extension">
         <label>Signature Hash Algorithm:</label>
-        <p class="description">SHA256</p>
+        <p class="description">{{certificate.signatureHashAlgorithm}}</p>
       </div>
       <div class="extension">
         <label>Public key:</label>
-        <p class="description">DSAJDOSJAODJAO24125152515125351+523253fcsafs</p>
+        <p class="description">{{certificate.publicKey}}</p>
       </div>
 
       <div class="actions">
         <button>Back</button>
-        <button>Print</button>
-        <button>Revoke</button>
+        <button (click)="printCertificate(certificate.serialNumber)">Print</button>
+        <button (click)="revokeCertificate(certificate.serialNumber)">Revoke</button>
       </div>
     </div>
   </div>

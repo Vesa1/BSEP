@@ -3,8 +3,11 @@ package com.example.demo.controller;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -15,6 +18,7 @@ import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -30,6 +34,7 @@ import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.crypto.paddings.ISO7816d4Padding;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -43,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.data.IssuerData;
 import com.example.demo.data.SubjectData;
 import com.example.demo.dto.CertificateDTO;
+import com.example.demo.dto.CertificateDetailsDTO;
 import com.example.demo.dto.SplitDataDTO;
 import com.example.demo.enums.CertificateType;
 import com.example.demo.dto.LoginDataDTO;
@@ -255,12 +261,74 @@ public class CertificateController {
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity getCertificateBySerialNumber( @PathVariable("id") Long id) {
-	 	
 	 	KeyStoreReader ksr = new KeyStoreReader();
-	 	Certificate cert = ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
-	 	System.out.println("-------------------------------------------------------------");
-	 	System.out.println(cert.toString());
-		return new ResponseEntity( HttpStatus.OK);
+	 	X509Certificate cert = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
+	 	
+	 	String issuedTo = cert.getSubjectDN().toString();
+	 	String issuedBy = cert.getIssuerDN().toString();
+	 	String validFrom = cert.getNotBefore().toString() + " to " + cert.getNotAfter().toString();
+	 	int version = cert.getVersion();
+	 	BigInteger serialNumber = cert.getSerialNumber();
+	 	String signatureAlgorithm = cert.getSigAlgName();
+	 	String signatureHashAlgorithm = signatureAlgorithm.substring(0,6);
+	 	String publicKey = cert.getPublicKey().toString();
+	 	
+	 	CertificateDetailsDTO retCert = new CertificateDetailsDTO(issuedTo, issuedBy, validFrom, version, serialNumber, signatureAlgorithm, signatureHashAlgorithm, publicKey);
+	 	
+		return new ResponseEntity( retCert, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/checkValidity/{id}",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity checkValidity( @PathVariable("id") Long id) {
+		System.out.println("Check validity of certificate with serialNumber = "+id);
+		return new ResponseEntity(  HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/chain/{id}",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity getCertificateChain( @PathVariable("id") Long id) {
+		System.out.println("Get chain of certificate with serialNumber = "+id);
+		return new ResponseEntity(  HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/revoke/{id}",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity revokeCertificate( @PathVariable("id") Long id) {
+		System.out.println("Revoke certificate with serialNumber = "+id);
+		return new ResponseEntity(  HttpStatus.OK);
 	}
 			
+	
+	@RequestMapping(value = "/print/{id}",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity printCertificate( @PathVariable("id") Long id) throws CertificateEncodingException {
+		System.out.println("Print certificate with serialNumber = "+id);
+		KeyStoreReader ksr = new KeyStoreReader();
+	 	X509Certificate cert = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
+		
+		try {
+			final FileOutputStream os = new FileOutputStream("cert"+id+".cer");
+			
+			os.write("-----BEGIN CERTIFICATE-----\n".getBytes("US-ASCII"));
+			os.write(Base64.encode(cert.getEncoded(),os));
+			os.write("-----END CERTIFICATE-----\n".getBytes("US-ASCII"));
+			os.close();
+		} catch (FileNotFoundException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	
+		return new ResponseEntity(  HttpStatus.OK);
+	}
 }

@@ -37,7 +37,9 @@
     <ng-container matColumnDef="action">
         <th mat-header-cell *matHeaderCellDef> Action </th>
         <td mat-cell *matCellDef="let element"> 
-          <button [routerLink]="[element.serialNumber]"> Details </button>  
+          <button [routerLink]="[element.serialNumber]"> Details </button> 
+          <button (click)="getCertificateChain(element.serialNumber)"> Chain </button> 
+          <button (click)="checkValidity(element.serialNumber)"> Validity </button> 
         </td>
       </ng-container>
   

@@ -4,7 +4,7 @@
 
 .content{
   width: 100%;
-  min-height: calc(100vh - 220px);
+  min-height: calc(100vh - 200px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,5 +17,9 @@ table {
 .mat-header-cell {
   background-color: rgba(0,0,0,.54);
   color: white
+}
+
+.mat-cell button{
+  margin-right: 10px;
 }
 
