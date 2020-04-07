@@ -59,6 +59,9 @@ public class CertificateController {
 
 	private KeyPair keyPairIssuer;
 	private KeyStoreReader keyStoreReader;
+	private static final String  KEYSTORE_FILE = "globalKeyStore.p12";
+	private static final String  KEYSTORE_PASSWORD = "sifra";
+
 	
 	@Autowired
 	private CertificateService certificateService;
@@ -77,7 +80,7 @@ public class CertificateController {
 		System.out.println(newCertificateDTO.toString());
 		
 		KeyStoreWriter ks = new KeyStoreWriter();
-		ks.loadKeyStore("globalKeyStore.p12", "sifra".toCharArray());;
+		ks.loadKeyStore(KEYSTORE_FILE, KEYSTORE_PASSWORD.toCharArray());
 		
 		
 		Long serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
@@ -102,8 +105,8 @@ public class CertificateController {
 			System.out.println(cert.toString());
 			
 			try {
-				ks.write("alijas"+subjectData.getSerialNumber(), subjectData.getPrivateKey(), "sifra".toCharArray(), cert); //potpisujemo sertifikat privatnim kljucem subject-a
-				ks.saveKeyStore("globalKeyStore.p12", "sifra".toCharArray());
+				ks.write("alijas"+subjectData.getSerialNumber(), subjectData.getPrivateKey(), KEYSTORE_PASSWORD.toCharArray(), cert); //potpisujemo sertifikat privatnim kljucem subject-a
+				ks.saveKeyStore(KEYSTORE_FILE, KEYSTORE_PASSWORD.toCharArray());
 			} catch(Exception e) {
 				
 			}
@@ -154,7 +157,7 @@ public class CertificateController {
 		KeyStoreReader ksr = new KeyStoreReader();
 		ArrayList<CertificateDTO> certs = new ArrayList<>();
 		
-		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces("globalKeyStore.p12", "sifra");
+		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD);
 		
 		for (X509Certificate certificate : certificates) {
 			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
@@ -190,7 +193,7 @@ public class CertificateController {
 		KeyStoreReader ksr = new KeyStoreReader(); 
 		ArrayList<CertificateDTO> certs = new ArrayList<>();
 		
-		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces("globalKeyStore.p12", "sifra"); //citanje svih sertifikata 
+		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD); //citanje svih sertifikata 
 		
 		for (X509Certificate certificate : certificates) {
 			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
@@ -252,8 +255,11 @@ public class CertificateController {
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity getCertificateBySerialNumber( @PathVariable("id") Long id) {
-		
-	 	System.out.println("SERIAL NUMBER" + id);
+	 	
+	 	KeyStoreReader ksr = new KeyStoreReader();
+	 	Certificate cert = ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
+	 	System.out.println("-------------------------------------------------------------");
+	 	System.out.println(cert.toString());
 		return new ResponseEntity( HttpStatus.OK);
 	}
 			
