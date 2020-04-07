@@ -49,6 +49,7 @@ import com.example.demo.data.IssuerData;
 import com.example.demo.data.SubjectData;
 import com.example.demo.dto.CertificateDTO;
 import com.example.demo.dto.CertificateDetailsDTO;
+import com.example.demo.dto.IssuerCertificateDTO;
 import com.example.demo.dto.SplitDataDTO;
 import com.example.demo.enums.CertificateType;
 import com.example.demo.dto.LoginDataDTO;
@@ -91,8 +92,8 @@ public class CertificateController {
 		
 		Long serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
 		SubjectData subjectData = generateSubjectData(newCertificateDTO, serialId.toString()); //Kreiramo subject
-		if(!newCertificateDTO.isSelfSigned()) {
-			
+		if(newCertificateDTO.isSelfSigned()) {
+			System.out.println("\nCertificate is root");
 			Calendar calendar = Calendar.getInstance();
 			subjectData.setStartDate(new Date()); //pocetak vazenja sertifikata
 			calendar.add(Calendar.YEAR, 10);
@@ -101,7 +102,7 @@ public class CertificateController {
 			System.out.println("\n---Subject data---");
 			System.out.println(subjectData.toString());
 			
-			IssuerData issuerData = generateIssuerData(serialId.toString(), subjectData.getPrivateKey(), newCertificateDTO);
+			IssuerData issuerData = generateIssuerDataSelfSigned(serialId.toString(), subjectData.getPrivateKey(), newCertificateDTO);
 			System.out.println("\n---Issuer Data---");
 			System.out.println(issuerData.toString());
 			
@@ -116,6 +117,24 @@ public class CertificateController {
 			} catch(Exception e) {
 				
 			}
+		} else {
+			System.out.println("\nCertificate is intermediate or end entity");
+			System.out.println("Serial number od issuer certificate is: " + newCertificateDTO.getSerialNumber());
+			
+			Calendar calendar = Calendar.getInstance();
+			subjectData.setStartDate(new Date()); //pocetak vazenja sertifikata
+			calendar.add(Calendar.YEAR, 10);
+			subjectData.setEndDate(calendar.getTime()); // kraj vazenja sertifikata
+			
+			System.out.println("\n---Subject data---");
+			System.out.println(subjectData.toString());
+			
+			KeyStoreReader ksr = new KeyStoreReader();
+			Certificate issuerCertificate = ksr.readCertificate("globalKeyStore.p12", "sifra","alijas" + newCertificateDTO.getSerialNumber());
+			System.out.println(issuerCertificate.toString());
+			
+			//IssuerData issuerData = new IssuerData(issuerCertificate.)
+			//
 		}
 
 		return new ResponseEntity(HttpStatus.OK);
@@ -137,7 +156,7 @@ public class CertificateController {
 		    builder.addRDN(BCStyle.O, newCertificateDTO.getOrganization());
 		    builder.addRDN(BCStyle.OU,newCertificateDTO.getOrganizationalUnit());
 		    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
-		    builder.addRDN(BCStyle.E, "default@gmail.com");
+		    builder.addRDN(BCStyle.E, newCertificateDTO.getEmail());
 		    //UID (USER ID) je ID korisnika
 		    builder.addRDN(BCStyle.UID, serialId);
 		    
@@ -197,7 +216,7 @@ public class CertificateController {
 		System.out.println("\n---Getting issuer list---");
 		
 		KeyStoreReader ksr = new KeyStoreReader(); 
-		ArrayList<CertificateDTO> certs = new ArrayList<>();
+		ArrayList<IssuerCertificateDTO> certs = new ArrayList<>();
 		
 		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD); //citanje svih sertifikata 
 		
@@ -208,7 +227,8 @@ public class CertificateController {
 			System.out.println("Issuer id: " + certificate.getNotAfter());
 			if(!(certificateService.isRevokedAndEndEntity(certificate.getSerialNumber())) && certificate.getNotAfter().after(new Date())) {
 				if(chainCertificates(certificate)) {
-					CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
+					IssuerCertificateDTO cert = new IssuerCertificateDTO(certificate.getSerialNumber().toString(), subjectData.getCN(), subjectData.getC(), subjectData.getSURNAME(),
+							subjectData.getGIVENNAME(), subjectData.getO(), subjectData.getOU(), subjectData.getEMAILADDRESS());
 			
 					certs.add(cert);
 					System.out.println(cert);
@@ -223,7 +243,7 @@ public class CertificateController {
 		return true;
 	}
 	 
-	private IssuerData generateIssuerData(String serialId, PrivateKey issuerKey, NewCertificateDTO newCertificateDTO) {
+	private IssuerData generateIssuerDataSelfSigned(String serialId, PrivateKey issuerKey, NewCertificateDTO newCertificateDTO) {
 		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
 	    builder.addRDN(BCStyle.CN, newCertificateDTO.getCommonName());
 	    builder.addRDN(BCStyle.SURNAME, newCertificateDTO.getSurname());
@@ -231,7 +251,7 @@ public class CertificateController {
 	    builder.addRDN(BCStyle.O, newCertificateDTO.getOrganization());
 	    builder.addRDN(BCStyle.OU, newCertificateDTO.getOrganizationalUnit());
 	    builder.addRDN(BCStyle.C, newCertificateDTO.getCountry());
-	    builder.addRDN(BCStyle.E, "default@gmail.com");
+	    builder.addRDN(BCStyle.E, newCertificateDTO.getEmail());
 	    //UID (USER ID) je ID korisnika
 	    builder.addRDN(BCStyle.UID, serialId);
 

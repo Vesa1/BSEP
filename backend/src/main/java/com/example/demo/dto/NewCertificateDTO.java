@@ -10,6 +10,9 @@ public class NewCertificateDTO {
 	private String organizationalUnit;
 	private boolean selfSigned;
 	private String issuer;
+	private String email;
+	private String serialNumber;
+	private String certificateType;
 	
 	
 	
@@ -17,9 +20,9 @@ public class NewCertificateDTO {
 		super();
 	}
 
-	public NewCertificateDTO(java.lang.String commonName, java.lang.String country, java.lang.String surname,
-			java.lang.String givenName, java.lang.String organization, java.lang.String organizationalUnit,
-			boolean string, java.lang.String issuer) {
+	public NewCertificateDTO(String commonName, String country, String surname, String givenName, String organization,
+			String organizationalUnit, boolean selfSigned, String issuer, String email, String serialNumber,
+			String certificateType) {
 		super();
 		this.commonName = commonName;
 		this.country = country;
@@ -27,8 +30,35 @@ public class NewCertificateDTO {
 		this.givenName = givenName;
 		this.organization = organization;
 		this.organizationalUnit = organizationalUnit;
-		this.selfSigned = string;
+		this.selfSigned = selfSigned;
 		this.issuer = issuer;
+		this.email = email;
+		this.serialNumber = serialNumber;
+		this.certificateType = certificateType;
+	}
+	
+	public String getCertificateType() {
+		return certificateType;
+	}
+
+	public void setCertificateType(String certificateType) {
+		this.certificateType = certificateType;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getSerialNumber() {
+		return serialNumber;
+	}
+
+	public void setSerialNumber(String serialNumber) {
+		this.serialNumber = serialNumber;
 	}
 
 	public String getCommonName() {
@@ -99,9 +129,7 @@ public class NewCertificateDTO {
 	public String toString() {
 		return "NewCertificateDTO [commonName=" + commonName + ", country=" + country + ", surname=" + surname
 				+ ", givenName=" + givenName + ", organization=" + organization + ", organizationalUnit="
-				+ organizationalUnit + ", selfSigned=" + selfSigned + ", issuer=" + issuer + "]";
+				+ organizationalUnit + ", selfSigned=" + selfSigned + ", issuer=" + issuer + ", email=" + email
+				+ ", serialNumber=" + serialNumber + ", certificateType=" + certificateType + "]";
 	}
-	
-	
-	
 }

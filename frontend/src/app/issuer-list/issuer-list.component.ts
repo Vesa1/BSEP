@@ -19,6 +19,10 @@ export class IssuerListComponent implements OnInit {
   public certificates: Certificate[];
   @Output() 
   select: EventEmitter<any> = new EventEmitter();
+
+  @Output()
+  radio: EventEmitter<any> = new EventEmitter();
+  
   constructor(private certificateService: CertificateService) { }
 
   ngOnInit() {
@@ -31,5 +35,10 @@ export class IssuerListComponent implements OnInit {
   onSelect(val) {
     console.log(val);
     this.select.emit(val);
+  }
+
+  onRadioButton(val) {
+    console.log("Changing");
+    console.log(val);
   }
 }

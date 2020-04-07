@@ -21,10 +21,18 @@
             <label for="organizationalUnit"><b>Organizational unit</b></label>
             <input type="text" ngModel placeholder="Enter organizational unit" name="organizationalUnit" required>
 
-            <div class = "form-group">
-                <input type = "checkbox" ngModel name="self-signed" [(ngModel)] = "selfSigned">  
+            <label for="email"><b>Email</b></label>
+            <input type="text" ngModel placeholder="Enter email" name="email" required>
+            <fieldset (change) = "onChangeRadio()"> 
+                <input type="radio" name = "radioButton" [(ngModel)]="radioButtonValue" value = "root" checked>Self signed<br/>
+                <input type="radio" name = "radioButton" [(ngModel)]="radioButtonValue" value="endEntity">End entity<br/>
+                <input type="radio" name="radioButton" [(ngModel)]="radioButtonValue" value="intermediate">Intermediate CA
+            </fieldset>
+
+            <!--div class = "form-group">
+                <input type = "checkbox" ngModel name="self-signed" [(ngModel)] = "selfSigned" checked = "false">  
                 <label for = "self-signed">Self-signed?</label><br>
-            </div>
+            </div-->
             <app-issuer-list *ngIf = "!selfSigned" (select)="onChange($event)"></app-issuer-list>
             <span *ngIf="!newCertificateForm.form.valid && isClicked" style="color:red">Sva polja su obavezna.</span>
             <button type="submit">Create new certificate</button>
