@@ -91,9 +91,18 @@ public class CertificateController {
 		KeyStoreWriter ks = new KeyStoreWriter();
 		ks.loadKeyStore(KEYSTORE_FILE, KEYSTORE_PASSWORD.toCharArray());
 		
-		
-		Long serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
+		Long serialId;
+		if(newCertificateDTO.getCertificateType().equals("root")) {
+			serialId = certificateService.saveCertificate(CertificateType.root); //Dodajemo u bazu serijski broj sert i da je root element
+		} else {
+			if(newCertificateDTO.getCertificateType().equals("endEntity")) {
+				serialId = certificateService.saveCertificate(CertificateType.endEntity);
+			} else {
+				serialId = certificateService.saveCertificate(CertificateType.intermediate);
+			}
+		}
 		SubjectData subjectData = generateSubjectData(newCertificateDTO, serialId.toString()); //Kreiramo subject
+		
 		if(newCertificateDTO.isSelfSigned()) {
 			System.out.println("\nCertificate is root");
 			Calendar calendar = Calendar.getInstance();
@@ -132,16 +141,56 @@ public class CertificateController {
 			System.out.println(subjectData.toString());
 			
 			KeyStoreReader ksr = new KeyStoreReader();
-			Certificate issuerCertificate = ksr.readCertificate("globalKeyStore.p12", "sifra","alijas" + newCertificateDTO.getSerialNumber());
+			X509Certificate issuerCertificate = (X509Certificate)ksr.readCertificate("globalKeyStore.p12", "sifra","alijas" + newCertificateDTO.getSerialNumber());
 			System.out.println(issuerCertificate.toString());
 			
-			//IssuerData issuerData = new IssuerData(issuerCertificate.)
-			//
+			PrivateKey pk = ksr.readPrivateKey("globalKeyStore.p12", "sifra", "alijas" + issuerCertificate.getSerialNumber(), "sifra");
+			
+			
+			SplitDataDTO issuerDetails = mapDataFromCertificate(issuerCertificate.getSubjectDN().getName());
+			System.out.println("\nIssuer details: " + issuerDetails);
+			
+			IssuerData createdIssuerData = generateIssuerData(issuerDetails.getCN(), issuerDetails.getSURNAME(),
+					issuerDetails.getGIVENNAME(), issuerDetails.getO(), issuerDetails.getOU(), issuerDetails.getC(), 
+					issuerDetails.getEMAILADDRESS(), issuerDetails.getUID(), pk);
+			if(newCertificateDTO.getCertificateType().equals(CertificateType.intermediate)) {
+				
+			}
+			CertificateGenerator cg = new CertificateGenerator();
+			Certificate cert = cg.generateCertificate(subjectData, createdIssuerData);
+			System.out.println("\n---Certificate---");
+			System.out.println(cert.toString());
+			
+			try {
+				ks.write("alijas"+subjectData.getSerialNumber(), pk, KEYSTORE_PASSWORD.toCharArray(), cert); //potpisujemo sertifikat privatnim kljucem subject-a
+				ks.saveKeyStore(KEYSTORE_FILE, KEYSTORE_PASSWORD.toCharArray());
+			} catch(Exception e) {
+				
+			}
 		}
 
 		return new ResponseEntity(HttpStatus.OK);
 	}
 	
+	
+	private IssuerData generateIssuerData(String commonName, String surname, String givenName, String organization, String organizationalUnit,
+			String country, String email, String serialNumber, PrivateKey pk) {
+		X500NameBuilder builder = new X500NameBuilder(BCStyle.INSTANCE);
+	    builder.addRDN(BCStyle.CN, commonName);
+	    builder.addRDN(BCStyle.SURNAME, surname);
+	    builder.addRDN(BCStyle.GIVENNAME, givenName);
+	    builder.addRDN(BCStyle.O, organization);
+	    builder.addRDN(BCStyle.OU, organizationalUnit);
+	    builder.addRDN(BCStyle.C, country);
+	    builder.addRDN(BCStyle.E, email);
+	    //UID (USER ID) je ID korisnika
+	    builder.addRDN(BCStyle.UID, serialNumber);
+
+		//Kreiraju se podaci za issuer-a, sto u ovom slucaju ukljucuje:
+	    // - privatni kljuc koji ce se koristiti da potpise sertifikat koji se izdaje
+	    // - podatke o vlasniku sertifikata koji izdaje nov sertifikat
+		return new IssuerData(pk, builder.build());
+	}
 	
 	
 	private SubjectData generateSubjectData(NewCertificateDTO newCertificateDTO, String serialId) {
