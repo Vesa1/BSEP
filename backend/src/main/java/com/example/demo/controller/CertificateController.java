@@ -313,19 +313,15 @@ public class CertificateController {
 		
 		try {
 			final FileOutputStream os = new FileOutputStream("cert"+id+".cer");
-			
 			os.write("-----BEGIN CERTIFICATE-----\n".getBytes("US-ASCII"));
 			os.write(Base64.encode(cert.getEncoded(),os));
 			os.write("-----END CERTIFICATE-----\n".getBytes("US-ASCII"));
 			os.close();
 		} catch (FileNotFoundException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		} catch (UnsupportedEncodingException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	
