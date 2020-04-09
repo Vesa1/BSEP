@@ -17,6 +17,7 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -27,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 
 import javax.annotation.PostConstruct;
 
@@ -79,7 +81,7 @@ public class CertificateController {
 			consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE
 			)
-	public ResponseEntity createNewCertificate(@RequestBody NewCertificateDTO newCertificateDTO) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
+	public ResponseEntity createNewCertificate(@RequestBody NewCertificateDTO newCertificateDTO) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, UnrecoverableKeyException {
 		System.out.println("--------------------------------------------------");
 		System.out.println("[CertificateController] -> createNewCertificate method");
 		System.out.println("--------------------------------------------------");
@@ -190,13 +192,11 @@ public class CertificateController {
 			
 			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
 			certs.add(cert);
-
 		}
 		return new ResponseEntity(certs, HttpStatus.OK);
 	}
 	
 	public SplitDataDTO mapDataFromCertificate(String data) {
-		
 		String[] fields = (data.trim()).split(",");
 		String[] args = new String[10];
 		for(int i = 0; i < fields.length; i++){
@@ -280,7 +280,7 @@ public class CertificateController {
 	@RequestMapping(value = "/{id}",
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity getCertificateBySerialNumber( @PathVariable("id") Long id) {
+	public ResponseEntity getCertificateBySerialNumber( @PathVariable("id") Long id) throws UnrecoverableKeyException {
 	 	KeyStoreReader ksr = new KeyStoreReader();
 	 	X509Certificate cert = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
 	 	
@@ -317,17 +317,86 @@ public class CertificateController {
 	@RequestMapping(value = "/revoke/{id}",
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity revokeCertificate( @PathVariable("id") Long id) {
+	public ResponseEntity revokeCertificate( @PathVariable("id") Long id) throws UnrecoverableKeyException {
 		System.out.println("Revoke certificate with serialNumber = "+id);
-		return new ResponseEntity(  HttpStatus.OK);
+		ArrayList<String> inWaitForCheck = new ArrayList<>();
+		KeyStoreReader ksr = new KeyStoreReader();
+		X509Certificate cert = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
+		Long idCert = (Long)id;
+        com.example.demo.model.Certificate certDB = this.certificateService.getCertificateById(idCert);
+        
+        if(cert == null || certDB == null) {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
+        
+      /*
+       * FIRST CASE => CURRENT CERTIFICATE IS END-ENTITY
+       */
+        if(certDB.getCertificateType().equals(CertificateType.endEntity)) {
+        	boolean isRevoked = this.certificateService.revokeCertificate(idCert);
+        	if(isRevoked) {
+        		return new ResponseEntity(HttpStatus.OK);
+        	}
+        }
+        
+        ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD);
+        /*
+         * SECOND CASE => CURRENT CERTIFICATE IS INTERMEDIATE
+         */
+        if(certDB.getCertificateType().equals(CertificateType.intermediate)) {
+        	boolean isRevoked = this.certificateService.revokeCertificate(idCert); //revoke chosen certificate
+        	
+        	if(isRevoked) {
+        		for (X509Certificate certificate : certificates) {
+    				if(certificate.getIssuerDN().equals(cert.getSubjectDN())) {
+    					Long idCertificate = cert.getSerialNumber().longValue();
+    					boolean isChildCertificateRevoked = this.certificateService.revokeCertificate(idCertificate);
+    					if(isChildCertificateRevoked) {
+    						System.out.println("Povucen");
+    					}
+    					if(checkIfIsIssuer(certificate, certificates)) {
+    						System.out.println("Izbrisani sertifikat je issuer, povlacimo sve njegove potpisane sertifikate");
+    						revokeCertificateRecursion(certificate, certificates);
+    					}
+    				}
+    			}
+        	}
+        	return new ResponseEntity(HttpStatus.NOT_FOUND);
+        	
+        }
+        
+        
+        return new ResponseEntity(HttpStatus.OK);
 	}
-			
+
+	public boolean revokeCertificateRecursion(X509Certificate issuer, ArrayList<X509Certificate> certificates) {
+		for (X509Certificate certificate : certificates) {
+			if(certificate.getIssuerDN().equals(issuer.getSubjectDN())) {
+				Long idCertificate = issuer.getSerialNumber().longValue();
+				return this.certificateService.revokeCertificate(idCertificate);
+				
+			}
+		}
+		
+		return false;
+	}
+	
+	
+	public boolean checkIfIsIssuer(X509Certificate issuer, ArrayList<X509Certificate> certificates) {
+		for (X509Certificate certificate : certificates) {
+			if(certificate.getIssuerDN().equals(issuer.getSubjectDN())) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
 	
 	@RequestMapping(value = "/print/{id}",
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity printCertificate( @PathVariable("id") Long id) throws CertificateEncodingException {
-		System.out.println("Print certificate with serialNumber = "+id);
+	public ResponseEntity printCertificate( @PathVariable("id") Long id) throws CertificateEncodingException, UnrecoverableKeyException {
+		
 		KeyStoreReader ksr = new KeyStoreReader();
 	 	X509Certificate cert = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
 		

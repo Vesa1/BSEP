@@ -53,6 +53,8 @@ public class KeyStoreWriter {
 			
 			BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
 			keyStore.load(in, password);
+//			keyStore.load(null, null);
+
 			
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();

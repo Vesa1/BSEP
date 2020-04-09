@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { NewCertificate } from '../model/new-certificate';
 import { CertificateDetails } from '../model/certificate-details.model';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CertificateService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,private router: Router) {}
 
   getAllCertificates() {
     return this.http.get<any>(environment.link + '/certificate/getAll');
@@ -30,6 +31,8 @@ export class CertificateService {
       .subscribe(
         response => {
           console.log('Uspesno');
+          this.router.navigate(['/showAllCertificates']);
+
         },
         error => {
           console.log('Nije uspesno');

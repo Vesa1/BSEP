@@ -28,9 +28,29 @@ public class CertificateService {
 	public boolean isRevokedAndEndEntity(BigInteger bi) {
 		Long id = bi.longValue();
 		Certificate cert = certficateRepository.getById(id);
-		if(cert.isRevoked() || cert.getCertificateType().equals(CertificateType.endEntity)) {
+		if(cert != null && (cert.isRevoked() || cert.getCertificateType().equals(CertificateType.endEntity))) {
 			return true;
 		}
+		return false;
+	}
+	
+	public Certificate getCertificateById(Long id) {
+		Certificate cert = certficateRepository.getById(id);
+		
+		if(cert != null) {
+			return cert;
+		}
+		return null;
+	}
+
+	public boolean revokeCertificate(Long idCert) {
+		Certificate cert = certficateRepository.getById(idCert);
+		if(cert != null) {
+			cert.setRevoked(true);
+			this.certficateRepository.save(cert);
+			return true;
+		}
+		
 		return false;
 	}
 }
