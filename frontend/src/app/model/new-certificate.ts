@@ -8,6 +8,8 @@ export class NewCertificate {
         public organizationalUnit: string,
         public selfSigned: boolean,
         public issuer: string,
-        public serialNumber: string
+        public serialNumber: string, 
+        public email: string,
+        public certificateType: string
     ) {}
 }
