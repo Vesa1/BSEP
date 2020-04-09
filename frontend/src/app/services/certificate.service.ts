@@ -3,12 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { NewCertificate } from '../model/new-certificate';
 import { CertificateDetails } from '../model/certificate-details.model';
+import { Router } from '@angular/router';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class CertificateService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   getAllCertificates() {
     return this.http.get<any>(environment.link + '/certificate/getAll');
@@ -22,6 +24,12 @@ export class CertificateService {
 
   createNewCertificate(newCertificate: NewCertificate) {
     console.log('Usao u servis');
+
+    if(newCertificate.serialNumber == null) {
+      alert("Something went wrong! Check issuer field.");
+      return;
+    }
+
     this.http
       .post<NewCertificate>(
         environment.link + '/certificate/createNewCertificate',
@@ -29,9 +37,12 @@ export class CertificateService {
       )
       .subscribe(
         response => {
+          this.router.navigate(['/showAllCertificates']);
+          alert('Successful');
           console.log('Uspesno');
         },
         error => {
+          alert('Something went wrong!');
           console.log('Nije uspesno');
         }
       );
