@@ -22,6 +22,8 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
 import com.example.demo.data.IssuerData;
 
+import net.bytebuddy.dynamic.TypeResolutionStrategy.Passive;
+
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -66,6 +68,25 @@ public class KeyStoreReader {
 	 * @param keyPass - lozinka koja je neophodna da se izvuce privatni kljuc
 	 * @return - podatke o izdavaocu i odgovarajuci privatni kljuc
 	 */
+	
+	public PrivateKey getPrivateKey(String alijas) {
+		
+		try {
+			PrivateKey pk = (PrivateKey) keyStore.getKey(alijas, "sifra".toCharArray());
+			return pk;
+		} catch (UnrecoverableKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (KeyStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public IssuerData readIssuerFromStore(String keyStoreFile, String alias, char[] password, char[] keyPass) {
 		try {
 			//Datoteka se ucitava
