@@ -10,6 +10,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HomeComponent } from './home/home.component';
 import { MatTableModule } from "@angular/material/table";
 import { CertificateDetailsComponent } from './certificate-details/certificate-details.component';
+import { ChainComponent } from './chain/chain.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { CertificateDetailsComponent } from './certificate-details/certificate-d
     routingComponents,
     IssuerListComponent,
     HomeComponent,
-    CertificateDetailsComponent
+    CertificateDetailsComponent,
+    ChainComponent
   ],
   imports: [BrowserModule, AppRoutingModule, FormsModule, HttpClientModule, BrowserAnimationsModule, MatTableModule],
   providers: [],

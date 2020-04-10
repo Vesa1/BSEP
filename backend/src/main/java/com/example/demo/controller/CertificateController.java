@@ -352,6 +352,8 @@ public class CertificateController {
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity checkValidity( @PathVariable("id") Long id) {
 		System.out.println("Check validity of certificate with serialNumber = "+id);
+		
+		
 		return new ResponseEntity(  HttpStatus.OK);
 	}
 	
@@ -359,8 +361,41 @@ public class CertificateController {
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity getCertificateChain( @PathVariable("id") Long id) {
-		System.out.println("Get chain of certificate with serialNumber = "+id);
-		return new ResponseEntity(  HttpStatus.OK);
+		KeyStoreReader ksr = new KeyStoreReader();
+
+		X509Certificate cert = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+id);
+        ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD);
+		ArrayList<String> retVals = new ArrayList<>();
+		ArrayList<X509Certificate> chain = new ArrayList<>();
+		
+		chain.add(cert);
+		retVals.add(cert.getSubjectDN().toString());
+		while( cert != null) {
+			X509Certificate temp = findChain(cert, certificates);
+			
+			if(temp == null) {
+				cert = null;
+			}else {
+				chain.add(temp);
+				retVals.add(temp.getSubjectDN().toString());
+				cert = temp;
+			}
+		}
+
+		return new ResponseEntity( retVals, HttpStatus.OK);
+	}
+	
+	public X509Certificate findChain(X509Certificate cert, ArrayList<X509Certificate> certificates) {
+		X509Certificate retCert = null;
+		for (X509Certificate certificate : certificates) {
+			if(certificate.getSubjectDN().toString().equals(cert.getIssuerDN().toString())) {
+				retCert = certificate;
+			}
+		}
+		if(retCert.getSerialNumber() == cert.getSerialNumber()) {
+			retCert = null;
+		}
+		return retCert;
 	}
 	
 	@RequestMapping(value = "/revoke/{id}",
@@ -375,6 +410,7 @@ public class CertificateController {
         com.example.demo.model.Certificate certDB = this.certificateService.getCertificateById(idCert);
         
         if(cert == null || certDB == null) {
+        	System.out.println("NOT FOUND 378");
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
         
@@ -382,6 +418,7 @@ public class CertificateController {
        * FIRST CASE => CURRENT CERTIFICATE IS END-ENTITY
        */
         if(certDB.getCertificateType().equals(CertificateType.endEntity)) {
+        	System.out.println("FIRST CASE");
         	boolean isRevoked = this.certificateService.revokeCertificate(idCert);
         	if(isRevoked) {
         		return new ResponseEntity(HttpStatus.OK);
@@ -389,55 +426,43 @@ public class CertificateController {
         }
         
         ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD);
+       
         /*
          * SECOND CASE => CURRENT CERTIFICATE IS INTERMEDIATE
          */
         if(certDB.getCertificateType().equals(CertificateType.intermediate)) {
         	boolean isRevoked = this.certificateService.revokeCertificate(idCert); //revoke chosen certificate
-        	
         	if(isRevoked) {
-        		for (X509Certificate certificate : certificates) {
-    				if(certificate.getIssuerDN().equals(cert.getSubjectDN())) {
-    					Long idCertificate = cert.getSerialNumber().longValue();
-    					boolean isChildCertificateRevoked = this.certificateService.revokeCertificate(idCertificate);
-    					if(isChildCertificateRevoked) {
-    						System.out.println("Povucen");
-    					}
-    					if(checkIfIsIssuer(certificate, certificates)) {
-    						System.out.println("Izbrisani sertifikat je issuer, povlacimo sve njegove potpisane sertifikate");
-    						revokeCertificateRecursion(certificate, certificates);
-    					}
-    				}
-    			}
+        		revokeCertificateRecursion(cert, certificates);
+        	}else {
+        		return new ResponseEntity(HttpStatus.NOT_FOUND);
         	}
-        	return new ResponseEntity(HttpStatus.NOT_FOUND);
-        	
         }
-        
         
         return new ResponseEntity(HttpStatus.OK);
 	}
 
 	public boolean revokeCertificateRecursion(X509Certificate issuer, ArrayList<X509Certificate> certificates) {
 		for (X509Certificate certificate : certificates) {
-			if(certificate.getIssuerDN().equals(issuer.getSubjectDN())) {
-				Long idCertificate = issuer.getSerialNumber().longValue();
-				return this.certificateService.revokeCertificate(idCertificate);
+			if(certificate.getIssuerDN().toString().equals(issuer.getSubjectDN().toString())) {
+				Long idCertificate = certificate.getSerialNumber().longValue();
+				this.certificateService.revokeCertificate(idCertificate);
 				
+				if(checkIfIsIssuer(certificate, certificates)) {
+					revokeCertificateRecursion(certificate, certificates);
+				}
+				return this.certificateService.revokeCertificate(idCertificate);
 			}
 		}
-		
 		return false;
 	}
 	
-	
 	public boolean checkIfIsIssuer(X509Certificate issuer, ArrayList<X509Certificate> certificates) {
 		for (X509Certificate certificate : certificates) {
-			if(certificate.getIssuerDN().equals(issuer.getSubjectDN())) {
+			if(certificate.getIssuerDN().toString().equals(issuer.getSubjectDN().toString())) {
 				return true;
 			}
 		}
-		
 		return false;
 	}
 	

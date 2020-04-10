@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CertificateService } from '../services/certificate.service';
 import { CertificateDetails } from '../model/certificate-details.model';
 
@@ -13,7 +13,8 @@ export class CertificateDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private certificateService: CertificateService
+    private certificateService: CertificateService,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -35,5 +36,9 @@ export class CertificateDetailsComponent implements OnInit {
     this.certificateService
       .printCertificate(serialNumber)
       .subscribe(resp => console.log('SUCCESS'));
+  }
+
+  navigateBack(){
+    this.router.navigate(['/showAllCertificates']);
   }
 }

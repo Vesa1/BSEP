@@ -6,6 +6,7 @@
   width: 100%;
   min-height: calc(100vh - 200px);
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -24,3 +25,43 @@ table {
   margin-right: 10px;
 }
 
+.chain{
+  box-shadow: 4px 17px 17px 3px #b4b4b4;
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 50px;
+}
+
+.chain h5{
+ background-color: rgba(0,0,0,.54);
+ width: 100%;
+ display: flex;
+ justify-content: center;
+ align-items: center;
+ color: white;
+ height: 60px;
+ font-size: 16px;
+ font-weight: 400;
+ margin: 0;
+ margin-bottom: 20px;
+}
+
+.itemOfChain{
+  width: 60%;
+  margin: 10px 0;
+}
+
+.itemDescription{
+  box-shadow: 5px 2px 20px 0px #b4b4b4;
+  height: 50px;
+  padding: 10px;
+  text-align: center;
+  border-radius: 16px ;
+}
+
+.itemDescription:last-child{
+  margin-bottom: 30px;
+}

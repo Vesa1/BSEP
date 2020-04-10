@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 
-import { MatTableModule } from '@angular/material/table';
 import { MatTableDataSource } from '@angular/material';
 import { CertificateService } from '../services/certificate.service';
 
@@ -28,6 +27,9 @@ export class ShowAllCertificatesComponent implements OnInit {
   ];
   dataSource: MatTableDataSource<Certificate>;
   certificates: Certificate[];
+  showChain = false;
+  chosenCertificate: Certificate;
+  fetchedChain: string[];
 
   constructor(private certificateService: CertificateService) {}
 
@@ -45,8 +47,15 @@ export class ShowAllCertificatesComponent implements OnInit {
   }
 
   getCertificateChain(serialNumber: number) {
+    this.certificates.map(cert => {
+      if(+cert.serialNumber === +serialNumber){
+        this.chosenCertificate = cert;
+      }
+    });
+    this.showChain = true;
     this.certificateService
       .getCertificateChain(serialNumber)
-      .subscribe(resp => console.log('SUCCESS'));
+      .subscribe(resp => this.fetchedChain = resp.reverse());
   }
+
 }
