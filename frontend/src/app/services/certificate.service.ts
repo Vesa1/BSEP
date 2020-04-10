@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class CertificateService {
-  constructor(private http: HttpClient,private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   getAllCertificates() {
     return this.http.get<any>(environment.link + '/certificate/getAll');
@@ -23,6 +23,12 @@ export class CertificateService {
 
   createNewCertificate(newCertificate: NewCertificate) {
     console.log('Usao u servis');
+
+    if (newCertificate.serialNumber == null) {
+      alert('Something went wrong! Check issuer field.');
+      return;
+    }
+
     this.http
       .post<NewCertificate>(
         environment.link + '/certificate/createNewCertificate',
@@ -30,11 +36,13 @@ export class CertificateService {
       )
       .subscribe(
         response => {
+          this.router.navigate(['/showAllCertificates']);
+          alert('Successful');
           console.log('Uspesno');
           this.router.navigate(['/showAllCertificates']);
-
         },
         error => {
+          alert('Something went wrong!');
           console.log('Nije uspesno');
         }
       );
@@ -54,11 +62,11 @@ export class CertificateService {
     return this.http.get<any>(environment.link + `/certificate/chain/${id}`);
   }
 
-  revokeCertificate(id: number){
+  revokeCertificate(id: number) {
     return this.http.get<any>(environment.link + `/certificate/revoke/${id}`);
   }
 
-  printCertificate(id: number){
+  printCertificate(id: number) {
     return this.http.get<any>(environment.link + `/certificate/print/${id}`);
   }
 }

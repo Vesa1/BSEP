@@ -2,6 +2,7 @@ import { Component, OnInit, Input, ɵConsole } from '@angular/core';
 import { NewCertificate } from '../model/new-certificate';
 import { NgForm } from '@angular/forms';
 import { CertificateService } from '../services/certificate.service';
+
 @Component({
   selector: 'app-create-new-certificate',
   templateUrl: './create-new-certificate.component.html',
