@@ -109,7 +109,7 @@ public class CertificateController {
 			System.out.println("\nCertificate is root");
 			Calendar calendar = Calendar.getInstance();
 			subjectData.setStartDate(new Date()); //pocetak vazenja sertifikata
-			calendar.add(Calendar.YEAR, 10);
+			calendar.add(Calendar.YEAR, 20);
 			subjectData.setEndDate(calendar.getTime()); // kraj vazenja sertifikata
 			
 			System.out.println("\n---Subject data---");
@@ -136,7 +136,11 @@ public class CertificateController {
 			
 			Calendar calendar = Calendar.getInstance();
 			subjectData.setStartDate(new Date()); //pocetak vazenja sertifikata
-			calendar.add(Calendar.YEAR, 10);
+			if(newCertificateDTO.getCertificateType().equals("endEntity")) {
+				calendar.add(Calendar.YEAR, 2);
+			} else {
+				calendar.add(Calendar.YEAR, 10);
+			}
 			subjectData.setEndDate(calendar.getTime()); // kraj vazenja sertifikata
 			
 			System.out.println("\n---Subject data---");
