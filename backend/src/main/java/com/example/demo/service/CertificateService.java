@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+
 import java.math.BigInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,18 @@ public class CertificateService {
 
 	@Autowired
 	private CertificateRepository certficateRepository;
+	
+	public CertificateType getType(BigInteger bi) {
+		Long id = bi.longValue();
+		Certificate cert = certficateRepository.getById(id);
+		return cert.getCertificateType();
+	}
+	
+	public boolean isRevoked(BigInteger bi) {
+		Long id = bi.longValue();
+		Certificate c = certficateRepository.getById(id);
+		return c.isRevoked();
+	}
 	
 	public Long saveCertificate(CertificateType type) {
 		Certificate c = new Certificate(type);

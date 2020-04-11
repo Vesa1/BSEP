@@ -14,4 +14,5 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long>{
 	public Certificate save(Certificate c);
 	
 	public Certificate getById(Long id);
+	public boolean getByRevoked(Long id);
 }

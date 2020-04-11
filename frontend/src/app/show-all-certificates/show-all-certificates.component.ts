@@ -43,7 +43,12 @@ export class ShowAllCertificatesComponent implements OnInit {
   checkValidity(serialNumber: number) {
     this.certificateService
       .checkValidity(serialNumber)
-      .subscribe(resp => console.log('SUCCESS'));
+      .subscribe(resp => {
+        if(resp == true) 
+          alert('Certificate with serial number ' + serialNumber + ' is valid');
+        else 
+        alert('Certificate with serial number ' + serialNumber + ' is invalid');
+      });
   }
 
   getCertificateChain(serialNumber: number) {

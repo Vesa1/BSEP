@@ -2,6 +2,6 @@
 <select (change)="onSelect($event.target.value)" name="issuer">
     <option></option>
     <option *ngFor = "let cert of certificates" value={{cert.serialNumber}}>
-        common name: {{cert.commonName}}, given name: {{cert.givenName}}, surname: {{cert.surName}}, country: {{cert.country}}, organization: {{cert.organization}}, organizationUnit: {{cert.organizationalUnit}}
+        serialNumer: {{cert.serialNumber}}, common name: {{cert.commonName}}, given name: {{cert.givenName}}, surname: {{cert.surName}}, country: {{cert.country}}, organization: {{cert.organization}}, organizationUnit: {{cert.organizationalUnit}}
     </option>
 </select>

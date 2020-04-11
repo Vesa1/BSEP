@@ -21,7 +21,9 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -273,7 +275,8 @@ public class CertificateController {
 			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
 			SplitDataDTO issuerData = mapDataFromCertificate(certificate.getIssuerDN().getName());
 			
-			System.out.println("Issuer id: " + certificate.getNotAfter());
+			//System.out.println("Issuer id: " + certificate.getSerialNumber());
+			System.out.println(certificateService.getType(certificate.getSerialNumber()).toString());
 			if(!(certificateService.isRevokedAndEndEntity(certificate.getSerialNumber())) && certificate.getNotAfter().after(new Date())) {
 				if(chainCertificates(certificate)) {
 					IssuerCertificateDTO cert = new IssuerCertificateDTO(certificate.getSerialNumber().toString(), subjectData.getCN(), subjectData.getC(), subjectData.getSURNAME(),
@@ -289,6 +292,52 @@ public class CertificateController {
 	}
 	
 	public boolean chainCertificates(X509Certificate c) {
+		SplitDataDTO subjectData = mapDataFromCertificate(c.getSubjectDN().getName());
+		SplitDataDTO issuerData = mapDataFromCertificate(c.getIssuerDN().getName());
+		System.out.println("\n---Subject data of current certificate: ");
+		System.out.println(subjectData.toString());
+		System.out.println("\n---Issuer data of current certificate: ");
+		System.out.println(issuerData.toString());
+		
+		KeyStoreReader ksr = new KeyStoreReader();
+		while(!subjectData.getUID().equals(issuerData.getUID())) {
+			System.out.println("\n---In while---");
+			try {
+				c.checkValidity();
+				if(certificateService.isRevoked(new BigInteger(subjectData.getUID()))) {
+					System.out.println("\nCertificate with id " + subjectData.getUID() + " is revoked!");
+					return false;
+				} else {
+					c = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE,KEYSTORE_PASSWORD, "alijas"+ issuerData.getUID());
+					subjectData = mapDataFromCertificate(c.getSubjectDN().getName());
+					issuerData = mapDataFromCertificate(c.getIssuerDN().getName());
+				}
+			} catch (CertificateExpiredException e) {
+				System.out.println("Certificate is expired!");
+				return false;
+			} catch (CertificateNotYetValidException e) {
+				System.out.println("Certificate is expired!");
+			}
+		
+		}
+		
+		if(subjectData.getUID().equals(issuerData.getUID())) {
+			try {
+				c.checkValidity();
+				if(certificateService.isRevoked(new BigInteger(subjectData.getUID()))) {
+					System.out.println("\nCertificate with id " + subjectData.getUID() + " is revoked! That is root CA!");
+					return false;
+				} else {
+	
+				}
+			} catch (CertificateExpiredException e) {
+				System.out.println("Certificate is expired!");
+				return false;
+			} catch (CertificateNotYetValidException e) {
+				System.out.println("Certificate is expired!");
+			}
+		}
+		
 		return true;
 	}
 	 
@@ -352,9 +401,11 @@ public class CertificateController {
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity checkValidity( @PathVariable("id") Long id) {
 		System.out.println("Check validity of certificate with serialNumber = "+id);
-		
-		
-		return new ResponseEntity(  HttpStatus.OK);
+		KeyStoreReader ksr = new KeyStoreReader();
+		X509Certificate c = (X509Certificate)ksr.readCertificate(KEYSTORE_FILE, KEYSTORE_PASSWORD, "alijas" + id);
+		boolean validity = chainCertificates(c);
+		System.out.println("Certificate with serial number " + id + " is " + validity);
+		return new ResponseEntity(validity, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/chain/{id}",
