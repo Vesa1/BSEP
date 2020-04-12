@@ -53,6 +53,7 @@ import com.example.demo.data.IssuerData;
 import com.example.demo.data.SubjectData;
 import com.example.demo.dto.CertificateDTO;
 import com.example.demo.dto.CertificateDetailsDTO;
+import com.example.demo.dto.FilterDTO;
 import com.example.demo.dto.IssuerCertificateDTO;
 import com.example.demo.dto.SplitDataDTO;
 import com.example.demo.enums.CertificateType;
@@ -245,7 +246,7 @@ public class CertificateController {
 			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
 			SplitDataDTO issuerData = mapDataFromCertificate(certificate.getIssuerDN().getName());
 			
-			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU());
+			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU(), subjectData.getCN());
 			certs.add(cert);
 		}
 		return new ResponseEntity(certs, HttpStatus.OK);
@@ -483,9 +484,9 @@ public class CertificateController {
         ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD);
        
         /*
-         * SECOND CASE => CURRENT CERTIFICATE IS INTERMEDIATE
+         * SECOND CASE => CURRENT CERTIFICATE IS INTERMEDIATE OR ROOT CA
          */
-        if(certDB.getCertificateType().equals(CertificateType.intermediate)) {
+        if(certDB.getCertificateType().equals(CertificateType.intermediate) || certDB.getCertificateType().equals(CertificateType.root)) {
         	boolean isRevoked = this.certificateService.revokeCertificate(idCert); //revoke chosen certificate
         	if(isRevoked) {
         		revokeCertificateRecursion(cert, certificates);
@@ -499,13 +500,14 @@ public class CertificateController {
 
 	public boolean revokeCertificateRecursion(X509Certificate issuer, ArrayList<X509Certificate> certificates) {
 		for (X509Certificate certificate : certificates) {
-			if(certificate.getIssuerDN().toString().equals(issuer.getSubjectDN().toString())) {
+			if(certificate.getIssuerDN().toString().equals(issuer.getSubjectDN().toString()) && !(certificate.getSubjectDN().toString().equals(certificate.getIssuerDN().toString()) )) {
 				Long idCertificate = certificate.getSerialNumber().longValue();
 				this.certificateService.revokeCertificate(idCertificate);
 				
-				if(checkIfIsIssuer(certificate, certificates)) {
-					revokeCertificateRecursion(certificate, certificates);
-				}
+					if(checkIfIsIssuer(certificate, certificates)) {
+						revokeCertificateRecursion(certificate, certificates);
+					}
+				
 				return this.certificateService.revokeCertificate(idCertificate);
 			}
 		}
@@ -514,6 +516,7 @@ public class CertificateController {
 	
 	public boolean checkIfIsIssuer(X509Certificate issuer, ArrayList<X509Certificate> certificates) {
 		for (X509Certificate certificate : certificates) {
+			
 			if(certificate.getIssuerDN().toString().equals(issuer.getSubjectDN().toString())) {
 				return true;
 			}
@@ -545,4 +548,51 @@ public class CertificateController {
 	
 		return new ResponseEntity(  HttpStatus.OK);
 	}
+	
+	@RequestMapping(
+			value = "/getByFilter",
+			method = RequestMethod.POST,
+				consumes = MediaType.APPLICATION_JSON_VALUE,
+				produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity getByFilter(@RequestBody FilterDTO filter) {
+		KeyStoreReader ksr = new KeyStoreReader();
+		ArrayList<CertificateDTO> certs = new ArrayList<>();
+		ArrayList<X509Certificate> certificates = ksr.getAllCertifiaces(KEYSTORE_FILE, KEYSTORE_PASSWORD);
+		
+		for (X509Certificate certificate : certificates) {
+			Long idCert = certificate.getSerialNumber().longValue();
+			
+			SplitDataDTO subjectData = mapDataFromCertificate(certificate.getSubjectDN().getName());
+			SplitDataDTO issuerData = mapDataFromCertificate(certificate.getIssuerDN().getName());
+			
+			CertificateDTO cert = new CertificateDTO(certificate.getSerialNumber(), issuerData.getO(),issuerData.getOU(), subjectData.getO(), subjectData.getOU(), subjectData.getCN());
+			if(filter.getType() != null && filter.getCommonName() != null) {
+				if(filter.getType().equals("Valid")) {
+					if(!this.certificateService.checkValidity(idCert) && cert.getCommonName().toLowerCase().contains(filter.getCommonName().toLowerCase())) {
+						certs.add(cert);
+					}
+				}else {
+					if(this.certificateService.checkValidity(idCert) && cert.getCommonName().toLowerCase().contains(filter.getCommonName().toLowerCase())) {
+						certs.add(cert);
+					}
+				}
+			}else if(filter.getType() == null && filter.getCommonName() != null) {
+				if(cert.getCommonName().toLowerCase().contains(filter.getCommonName().toLowerCase())) {
+					certs.add(cert);
+				}
+			}else {
+				if(filter.getType().equals("Valid")) {
+					if(!this.certificateService.checkValidity(idCert)) {
+						certs.add(cert);
+					}
+				}else {
+					if(this.certificateService.checkValidity(idCert)) {
+						certs.add(cert);
+					}
+				}
+			}
+		}
+		return new ResponseEntity(certs, HttpStatus.OK);
+	}
+	
 }

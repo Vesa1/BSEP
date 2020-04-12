@@ -5,6 +5,7 @@ import java.math.BigInteger;
 public class CertificateDTO {
 	
 	private BigInteger serialNumber;
+	private String commonName;
 	private String issuerOrganization;
 	private String issuerOrganizationalUnit;
 	private String subjectOrganization;
@@ -17,10 +18,10 @@ public class CertificateDTO {
 
 	public CertificateDTO(BigInteger serialNumber, String issuerOrganization,
 			String issuerOrganizationalUnit,  String subjectOrganization,
-			String subjectOrganizationalUnit) {
+			String subjectOrganizationalUnit, String commonName) {
 		super();
 		this.serialNumber = serialNumber;
-		
+		this.commonName = commonName;
 		this.issuerOrganization = issuerOrganization;
 		this.issuerOrganizationalUnit = issuerOrganizationalUnit;
 		this.subjectOrganization = subjectOrganization;
@@ -74,5 +75,13 @@ public class CertificateDTO {
 		return "CertificateDTO [serialNumber=" + serialNumber +  ", issuerOrganization=" + issuerOrganization + ", issuerOrganizationalUnit="
 				+ issuerOrganizationalUnit +  ", subjectOrganization="
 				+ subjectOrganization + ", subjectOrganizationalUnit=" + subjectOrganizationalUnit + "]";
+	}
+
+	public String getCommonName() {
+		return commonName;
+	}
+
+	public void setCommonName(String commonName) {
+		this.commonName = commonName;
 	}
 }

@@ -67,4 +67,13 @@ public class CertificateService {
 		
 		return false;
 	}
+
+	public boolean checkValidity(Long idCert) {
+		Certificate cert = certficateRepository.getById(idCert);
+		if(cert != null) {
+			return cert.isRevoked();
+		}
+		
+		return false;
+	}
 }

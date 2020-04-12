@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { NewCertificate } from '../model/new-certificate';
 import { CertificateDetails } from '../model/certificate-details.model';
 import { Router } from '@angular/router';
+import { Filter } from '../model/filter.model';
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +25,7 @@ export class CertificateService {
   createNewCertificate(newCertificate: NewCertificate) {
     console.log('Usao u servis');
 
-    if (newCertificate.serialNumber == null) {
+    if (newCertificate.serialNumber === null && newCertificate.selfSigned === false ) {
       alert('Something went wrong! Check issuer field.');
       return;
     }
@@ -68,5 +69,9 @@ export class CertificateService {
 
   printCertificate(id: number) {
     return this.http.get<any>(environment.link + `/certificate/print/${id}`);
+  }
+
+  getByFilter(filter: Filter){
+    return this.http.post<any>(environment.link + '/certificate/getByFilter', filter);
   }
 }
