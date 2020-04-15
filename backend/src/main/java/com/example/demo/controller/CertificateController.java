@@ -256,8 +256,13 @@ public class CertificateController {
 		String[] fields = (data.trim()).split(",");
 		String[] args = new String[10];
 		for(int i = 0; i < fields.length; i++){
+			
 			String[] splitEachField = fields[i].split("=");
-			args[i] = splitEachField[1];
+			if(splitEachField[1] != null) {
+				args[i] = splitEachField[1];
+			}else {
+				args[i] = "";
+			}
 		}
 	    
 		SplitDataDTO retData = new SplitDataDTO(args[0], args[1], args[2], args[3], args[4], args[5],args[6], args[7]);

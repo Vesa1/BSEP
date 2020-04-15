@@ -89,6 +89,7 @@ table {
 }
 
 button{
+  margin: 5px 0;
   width: 70px;
   height: 25px;
   border-radius: 5px ;
