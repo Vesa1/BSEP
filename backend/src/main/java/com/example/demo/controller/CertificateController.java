@@ -406,6 +406,17 @@ public class CertificateController {
 		return new ResponseEntity( retCert, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value = "/checkRevocation/{id}",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity checkRevocation(@PathVariable("id") Long id) {
+		System.out.println("----Certificate with " + id + " : checking revocation");
+		
+		boolean revoked = this.certificateService.isRevoked(BigInteger.valueOf(id));
+		
+		return new ResponseEntity(revoked, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/checkValidity/{id}",
 			method = RequestMethod.GET,
 			produces = MediaType.APPLICATION_JSON_VALUE)

@@ -59,6 +59,12 @@ export class CertificateService {
     );
   }
 
+  checkRevocation(id: number) {
+    return this.http.get<any>(
+      environment.link + `/certificate/checkRevocation/${id}`
+    );
+  }
+
   getCertificateChain(id: number) {
     return this.http.get<any>(environment.link + `/certificate/chain/${id}`);
   }

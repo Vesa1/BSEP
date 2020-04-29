@@ -56,6 +56,15 @@ export class ShowAllCertificatesComponent implements OnInit {
     });
   }
 
+  checkRevocation(serialNumber: number) {
+    this.certificateService.checkRevocation(serialNumber).subscribe(resp => {
+      if(resp === true)
+        alert('Certificate ' + serialNumber + ' - revoked');
+      else 
+        alert('Certificate ' + serialNumber + ' - not revoked');
+    })
+  }
+
   getCertificateChain(serialNumber: number) {
     this.certificates.map(cert => {
       if (+cert.serialNumber === +serialNumber) {

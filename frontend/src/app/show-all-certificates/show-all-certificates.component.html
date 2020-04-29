@@ -60,6 +60,7 @@
           <button [routerLink]="[element.serialNumber]"> Details </button>
           <button (click)="getCertificateChain(element.serialNumber)"> Chain </button>
           <button (click)="checkValidity(element.serialNumber)"> Validity </button>
+          <button (click)="checkRevocation(element.serialNumber)" >Revoked </button>
         </td>
       </ng-container>
 
